@@ -1,0 +1,508 @@
+{
+  "code": 0,
+  "msg": "success",
+  "time": "1645599758",
+  "data": {
+    "outdoor": {
+      "temperature": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "127.7"
+      },
+      "feels_like": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "127.7"
+      },
+      "app_temp": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "46.6"
+      },
+      "dew_point": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "104.6"
+      },
+      "humidity": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "52"
+      }
+    },
+    "indoor": {
+      "temperature": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "63.7"
+      },
+      "humidity": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "70"
+      }
+    },
+    "solar_and_uvi": {
+      "solar": {
+        "time": "1645596032",
+        "unit": "W/m²",
+        "value": "101.8"
+      },
+      "uvi": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "7"
+      }
+    },
+    "rainfall": {
+      "rain_rate": {
+        "time": "1645596032",
+        "unit": "in/hr",
+        "value": "242.56"
+      },
+      "daily": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "332.69"
+      },
+      "event": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "245.56"
+      },
+      "hourly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "312.33"
+      },
+      "weekly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "372.53"
+      },
+      "monthly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "247.86"
+      },
+      "yearly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "8.25"
+      }
+    },
+    "rainfall_piezo": {
+      "rain_rate": {
+        "time": "1645596032",
+        "unit": "in/hr",
+        "value": "267.62"
+      },
+      "daily": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "223.72"
+      },
+      "event": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "179.51"
+      },
+      "hourly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "38.61"
+      },
+      "weekly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "120.84"
+      },
+      "monthly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "20.31"
+      },
+      "yearly": {
+        "time": "1645596032",
+        "unit": "in",
+        "value": "339.32"
+      }
+    },
+    "wind": {
+      "wind_speed": {
+        "time": "1645596032",
+        "unit": "mph",
+        "value": "46.9"
+      },
+      "wind_gust": {
+        "time": "1645596032",
+        "unit": "mph",
+        "value": "102.7"
+      },
+      "wind_direction": {
+        "time": "1645596032",
+        "unit": "º",
+        "value": "267"
+      }
+    },
+    "pressure": {
+      "relative": {
+        "time": "1645596032",
+        "unit": "inHg",
+        "value": "26.34"
+      },
+      "absolute": {
+        "time": "1645596032",
+        "unit": "inHg",
+        "value": "25.59"
+      }
+    },
+    "soil_ch1": {
+      "soilmoisture": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "79"
+      },
+      "ad": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "163"
+      }
+    },
+    "soil_ch2": {
+      "soilmoisture": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "19"
+      },
+      "ad": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "43"
+      }
+    },
+    "temp_ch1": {
+      "temperature": {
+        "time": "1645596032",
+        "unit": "ºF",
+        "value": "64.3"
+      }
+    },
+    "leaf_ch1": {
+      "leaf_wetness": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "73"
+      }
+    },
+    "pm25_ch1": {
+      "real_time_aqi": {
+        "time": "1645599717",
+        "unit": "µg/m3",
+        "value": "229"
+      },
+      "pm25": {
+        "time": "1645599717",
+        "unit": "µg/m3",
+        "value": "179"
+      },
+      "24_hours_aqi": {
+        "time": "1645599717",
+        "unit": "µg/m3",
+        "value": "500"
+      }
+    },
+    "battery": {
+      "t_rh_p_sensor": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "ws1900_console": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.07"
+      },
+      "ws1800_console": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "2.79"
+      },
+      "ws6006_console": {
+        "time": "1645596032",
+        "unit": "%",
+        "value": "45"
+      },
+      "console": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "3.98"
+      },
+      "outdoor_t_rh_sensor": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "0"
+      },
+      "wind_sensor": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.02"
+      },
+      "haptic_array_battery": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "2.78"
+      },
+      "haptic_array_capacitor": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.2"
+      },
+      "sonic_array": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.71"
+      },
+      "rainfall_sensor": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.3"
+      },
+      "sensor_array": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "lightning_sensor": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "2"
+      },
+      "aqi_combo_sensor": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "water_leak_sensor_ch1": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "5"
+      },
+      "water_leak_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "2"
+      },
+      "water_leak_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "2"
+      },
+      "water_leak_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "3"
+      },
+      "pm25_sensor_ch1": {
+        "time": "1645599717",
+        "unit": "",
+        "value": "4"
+      },
+      "pm25_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "6"
+      },
+      "pm25_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "4"
+      },
+      "pm25_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch1": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "0"
+      },
+      "temp_humidity_sensor_ch5": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch6": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "0"
+      },
+      "temp_humidity_sensor_ch7": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "1"
+      },
+      "temp_humidity_sensor_ch8": {
+        "time": "1645596032",
+        "unit": "",
+        "value": "0"
+      },
+      "soilmoisture_sensor_ch1": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.3"
+      },
+      "soilmoisture_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.0"
+      },
+      "soilmoisture_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.1"
+      },
+      "soilmoisture_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.0"
+      },
+      "soilmoisture_sensor_ch5": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.9"
+      },
+      "soilmoisture_sensor_ch6": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.1"
+      },
+      "soilmoisture_sensor_ch7": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.9"
+      },
+      "soilmoisture_sensor_ch8": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.5"
+      },
+      "temperature_sensor_ch1": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.77"
+      },
+      "temperature_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.15"
+      },
+      "temperature_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.50"
+      },
+      "temperature_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.65"
+      },
+      "temperature_sensor_ch5": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.99"
+      },
+      "temperature_sensor_ch6": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.32"
+      },
+      "temperature_sensor_ch7": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.97"
+      },
+      "temperature_sensor_ch8": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.15"
+      },
+      "leaf_wetness_sensor_ch1": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.71"
+      },
+      "leaf_wetness_sensor_ch2": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.74"
+      },
+      "leaf_wetness_sensor_ch3": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.97"
+      },
+      "leaf_wetness_sensor_ch4": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.82"
+      },
+      "leaf_wetness_sensor_ch5": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.91"
+      },
+      "leaf_wetness_sensor_ch6": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.30"
+      },
+      "leaf_wetness_sensor_ch7": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.39"
+      },
+      "leaf_wetness_sensor_ch8": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "0.09"
+      },
+      "ldsbatt_1": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.3"
+      },
+      "ldsbatt_2": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.3"
+      },
+      "ldsbatt_3": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.3"
+      },
+      "ldsbatt_4": {
+        "time": "1645596032",
+        "unit": "V",
+        "value": "1.3"
+      }
+    }
+  }
+}
