@@ -1,0 +1,1 @@
+- FieldData reads a grower's own Ecowitt station and soil probes through Ecowitt.net, under the grower's own keys, and returns every reading in SI units and UTC: `fielddata_list_stations`, `fielddata_current`, `fielddata_history` and `fielddata_summary` (daily temperature, frost hours, rain and degree-days above a caller's base).
