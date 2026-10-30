@@ -18,3 +18,7 @@
 # auto-merge will take.
 /tests/
 *.md
+
+# FieldData holds no local ledger: the money paths live in the SDK. Its sensitive surface
+# is the patron's own vendor keys. A default key added to the credential resolver, or a key
+# cache shared across patrons in server.py, would hand one grower's stations to every caller.
