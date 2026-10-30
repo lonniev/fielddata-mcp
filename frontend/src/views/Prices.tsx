@@ -4,8 +4,8 @@ import { PriceSheet } from "@tollbooth-dpyc/web/react";
 
 export default function Prices() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <PriceSheet />
+    <div className="page">
+      <div className="card p-5"><PriceSheet /></div>
     </div>
   );
 }

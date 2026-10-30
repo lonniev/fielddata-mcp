@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from fielddata_mcp.readings import Reading, daily_summary, parse_day, parse_utc, series
+from fielddata_mcp.readings import Reading, daily_summary, page_of_days, parse_day, parse_utc, series
 
 
 def reading(kind: str, quantity: float, at: datetime, channel: int | None = None) -> Reading:
@@ -92,3 +92,35 @@ def test_degree_days_never_go_negative():
         zone=ZoneInfo("UTC"), first_day=date(2026, 1, 5), last_day=date(2026, 1, 5), base_c=10.0, sample_hours=0.5,
     )
     assert out["days"][0]["degree_days"] == 0.0
+
+
+DAYS = [
+    {"date": "2026-10-01", "rain_mm": 3.0},
+    {"date": "2026-10-02", "rain_mm": None},
+    {"date": "2026-10-03", "rain_mm": 9.0},
+    {"date": "2026-10-04", "rain_mm": 1.0},
+    {"date": "2026-10-05", "rain_mm": 5.0},
+]
+
+
+def test_page_of_days_orders_every_day_before_it_pages():
+    out = page_of_days(DAYS, sort_col="rain_mm", sort_dir="desc", page=0, page_size=2)
+    assert [d["date"] for d in out["days"]] == ["2026-10-03", "2026-10-05"]
+    assert (out["total"], out["page"], out["page_size"]) == (5, 0, 2)
+
+
+def test_page_of_days_keeps_an_unreported_day_last_in_both_directions():
+    for direction in ("asc", "desc"):
+        out = page_of_days(DAYS, sort_col="rain_mm", sort_dir=direction, page=0, page_size=5)
+        assert out["days"][-1]["date"] == "2026-10-02"
+
+
+def test_page_of_days_clamps_the_page_and_refuses_an_unknown_column():
+    out = page_of_days(DAYS, sort_col="samples; drop table", sort_dir="sideways", page=99, page_size=2)
+    assert out["sort_col"] == "date" and out["sort_dir"] == "asc"
+    assert out["page"] == 2 and [d["date"] for d in out["days"]] == ["2026-10-05"]
+
+
+def test_page_of_days_defaults_give_the_whole_range_in_date_order():
+    out = page_of_days(DAYS, sort_col="date", sort_dir="asc", page=0, page_size=31)
+    assert [d["date"] for d in out["days"]] == [d["date"] for d in DAYS]

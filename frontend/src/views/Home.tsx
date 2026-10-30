@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAppShell } from "@tollbooth-dpyc/web/react";
 import Deck from "../components/instruments/Deck";
 import type { Reading } from "../lib/field";
+import { CafeShelf } from "./Catalog";
 
 // Illustrative figures for the page itself: no station stands behind them.
 export const SAMPLE: Reading[] = (
@@ -34,26 +35,28 @@ const WHY: { title: string; says: string }[] = [
 export default function Home() {
   const { session } = useAppShell();
   return (
-    <div className="mx-auto max-w-5xl px-4">
-      <section className="py-10 text-center sm:py-14">
-        <h1 className="text-4xl leading-tight sm:text-5xl">What your own ground actually measured.</h1>
-        <p className="prose-line mx-auto mt-4 max-w-xl">
-          FieldData reads your weather station and soil probes as one panel of instruments, for you and for your AI agents.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link to={session.signedIn ? "/panel" : "/signin"} className="chip chip-accent">
-            {session.signedIn ? "Open the panel" : "Sign in"}
-          </Link>
-          <Link to="/how" className="chip">How it works</Link>
+    <div className="page space-y-4">
+      <section className="card grid items-center gap-6 p-6 lg:grid-cols-[1fr_1.15fr] lg:p-8">
+        <div>
+          <h1 className="text-4xl leading-tight sm:text-5xl">What your own ground actually measured.</h1>
+          <p className="prose-line mt-4">
+            FieldData reads your weather station and soil probes as one panel of instruments, for you and for your AI agents.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link to={session.signedIn ? "/panel" : "/signin"} className="chip chip-accent">
+              {session.signedIn ? "Open the panel" : "Sign in"}
+            </Link>
+            <Link to="/how" className="chip">How it works</Link>
+            <Link to="/sources" className="chip">Sources</Link>
+          </div>
         </div>
+        <figure>
+          <Deck readings={SAMPLE} units="si" />
+          <figcaption className="mt-2 text-center text-xs text-[var(--tb-muted)]">Illustrative readings.</figcaption>
+        </figure>
       </section>
 
-      <figure className="mx-auto max-w-3xl">
-        <Deck readings={SAMPLE} units="si" />
-        <figcaption className="mt-2 text-center text-xs text-[var(--tb-muted)]">Illustrative readings.</figcaption>
-      </figure>
-
-      <section className="grid gap-3 py-10 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {WHY.map((w) => (
           <div key={w.title} className="card p-5">
             <h2 className="text-lg">{w.title}</h2>
@@ -62,19 +65,23 @@ export default function Home() {
         ))}
       </section>
 
-      <section className="card mb-10 p-6">
+      <section className="card p-6">
         <h2 className="text-xl">Built on Tollbooth DPYC™</h2>
-        <p className="prose-line mt-2 text-sm">
-          DPYC™ stands for Don't Pester Your Customer™: you pre-fund a balance in Bitcoin Lightning and each reading draws on it, with no subscription or payment popup.
-        </p>
-        <p className="prose-line mt-2 text-sm">
-          Your identity is a Nostr key, so FieldData asks for no email address and no password.
-        </p>
+        <div className="mt-2 grid gap-x-8 gap-y-2 md:grid-cols-2">
+          <p className="prose-line text-sm">
+            DPYC™ stands for Don't Pester Your Customer™: you pre-fund a balance in Bitcoin Lightning and each reading draws on it, with no subscription or payment popup.
+          </p>
+          <p className="prose-line text-sm">
+            Your identity is a Nostr key, so FieldData asks for no email address and no password.
+          </p>
+        </div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link to="/prices" className="chip">Prices</Link>
           <a href="https://tollbooth-dpyc.com" target="_blank" rel="noopener noreferrer" className="chip">Tollbooth DPYC™</a>
         </div>
       </section>
+
+      <CafeShelf count={3} />
     </div>
   );
 }

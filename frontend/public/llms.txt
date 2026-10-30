@@ -5,3 +5,6 @@ It is a Tollbooth DPYC™ operator, paid per call in sats from a pre-funded bala
 
 MCP endpoint: https://fielddata-mcp.fastmcp.app/mcp
 Source: https://github.com/lonniev/fielddata-mcp
+
+Pages: / /how /prices /catalog /sources /terms
+The Catalog shows the Good Brew café's collections, read live from https://cafe.tollbooth-dpyc.com; orders are placed at the café.

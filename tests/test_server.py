@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -194,3 +195,43 @@ async def test_missing_or_unreadable_keys_say_what_to_do(monkeypatch, creds, sit
     monkeypatch.setattr(server.runtime, "load_patron_session", load)
     with pytest.raises(ValueError, match=message):
         await server._require_keys(NPUB)
+
+
+# ---------------------------------------------------------------------------
+# The summary, sorted and paged
+# ---------------------------------------------------------------------------
+
+
+async def test_summary_tool_pages_its_ordered_days_and_totals_the_whole_range(monkeypatch):
+    async def station(npub, name):
+        return make_station("Back forty", "s1")
+
+    async def vendor(npub, cache_key, fn, *args):
+        return []
+
+    monkeypatch.setattr(server, "_resolve_station", station)
+    monkeypatch.setattr(server, "_vendor", vendor)
+
+    out = await inspect.unwrap(server.summary)(
+        "2026-10-01", "2026-10-05", sort_col="date", sort_dir="desc", page=1, page_size=2, npub=NPUB,
+    )
+
+    assert [d["date"] for d in out["days"]] == ["2026-10-03", "2026-10-02"]
+    assert (out["total"], out["page"], out["page_size"]) == (5, 1, 2)
+    assert out["totals"]["rain_mm"] == 0.0
+
+
+async def test_summary_tool_returns_the_whole_range_in_date_order_by_default(monkeypatch):
+    async def station(npub, name):
+        return make_station("Back forty", "s1")
+
+    async def vendor(npub, cache_key, fn, *args):
+        return []
+
+    monkeypatch.setattr(server, "_resolve_station", station)
+    monkeypatch.setattr(server, "_vendor", vendor)
+
+    out = await inspect.unwrap(server.summary)("2026-10-01", "2026-10-08", npub=NPUB)
+
+    assert [d["date"] for d in out["days"]] == [f"2026-10-0{n}" for n in range(1, 9)]
+    assert out["total"] == 8

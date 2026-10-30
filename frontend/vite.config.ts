@@ -30,6 +30,24 @@ export default defineConfig({
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
   // The owner reviews the harness on a phone over the tailnet.
-  server: { allowedHosts: ['.ts.net'] },
+  // Pages Functions answer /mcp and /cafe when deployed; here the dev server does.
+  server: {
+    allowedHosts: ['.ts.net'],
+    proxy: {
+      '/mcp': {
+        target: 'https://fielddata-mcp.fastmcp.app',
+        changeOrigin: true,
+        // As makeMcpProxy does: a caller that neither signs nor holds is anonymous.
+        configure: (proxy) => proxy.on('proxyReq', (req) => {
+          if (!req.getHeader('authorization')) req.setHeader('authorization', 'Bearer anonymous')
+        }),
+      },
+      '/cafe': {
+        target: 'https://cafe.tollbooth-dpyc.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cafe/, '') + (path.includes('products.json') ? (path.includes('?') ? '&' : '?') + 'limit=24' : ''),
+      },
+    },
+  },
   build: { outDir: 'dist' },
 })

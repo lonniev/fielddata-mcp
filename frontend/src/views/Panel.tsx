@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { formatDateTime, getPatronOnboardingStatus } from "@tollbooth-dpyc/web";
 import { RefreshButton, tourTarget, useAppShell, useProperty, useTimezone, useTour } from "@tollbooth-dpyc/web/react";
 import Deck from "../components/instruments/Deck";
+import PanelPreview from "../components/PanelPreview";
 import StationKeys from "../components/StationKeys";
 import Trace from "../components/Trace";
 import { currentReadings, listStations, readingHistory, type Reading, type Series, type Station } from "../lib/field";
@@ -74,11 +75,11 @@ export default function Panel() {
   const newest = readings.reduce((latest, r) => (r.observed_at > latest ? r.observed_at : latest), "");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <div className="page space-y-4">
       {ready === false && <StationKeys npub={session.npub} onConnected={load} />}
 
       {ready && (
-        <header className="flex flex-wrap items-center gap-3">
+        <header className="card flex flex-wrap items-center gap-3 p-4">
           {stations.length > 1 ? (
             <select
               {...tourTarget("panel.station")}
@@ -119,13 +120,15 @@ export default function Panel() {
         </p>
       )}
 
-      {ready && stations.length === 0 && !problem && (
-        <p className="prose-line text-sm">Your station account lists no stations yet: add one at ecowitt.net and it appears here.</p>
+      {(ready === false || (ready && stations.length === 0 && !problem)) && (
+        <PanelPreview
+          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to ecowitt.net.</p> : null}
+        />
       )}
 
       {readings.length > 0 && (
-        <div {...tourTarget("panel.deck")}>
-          <Deck readings={readings} units={units} onOpen={open} />
+        <div {...tourTarget("panel.deck")} className="card p-4">
+          <Deck readings={readings} units={units} onOpen={open} wide />
         </div>
       )}
 

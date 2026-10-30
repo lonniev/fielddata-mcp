@@ -29,6 +29,7 @@ from fielddata_mcp.readings import (
     SENSOR_KINDS,
     Station,
     daily_summary,
+    page_of_days,
     parse_day,
     parse_utc,
     series,
@@ -481,6 +482,10 @@ async def summary(
     end_date: str,
     station: str = "",
     base_c: float = 10.0,
+    sort_col: str = "date",
+    sort_dir: str = "asc",
+    page: int = 0,
+    page_size: int = _SUMMARY_MAX_DAYS,
     npub: PatronNpub = "",
 ) -> dict[str, Any]:
     """Summarize each day: air temperature min, max and mean, frost hours, rain and degree-days.
@@ -496,6 +501,11 @@ async def summary(
         station: The station's id, its name, or a part of its name only it has.
             Leave empty when you have one station.
         base_c: Degree-day base temperature in °C, e.g. 10 for maize, 4.5 for peas.
+        sort_col: date, temp_min_c, temp_max_c, temp_mean_c, frost_hours, rain_mm
+            or degree_days. Ordering covers every day in the range.
+        sort_dir: asc or desc.
+        page: Zero-based page of the ordered days.
+        page_size: Days per page. The default returns the whole range.
     """
     if not -10.0 <= base_c <= 40.0:
         raise ValueError("base_c must be between -10 and 40 °C.")
@@ -521,19 +531,21 @@ async def summary(
             f"history|{found.station_id}|{utc_iso(begin)}|{utc_iso(finish)}|{_SUMMARY_RESOLUTION}|summary",
             ecowitt.history, found, begin, finish, _SUMMARY_RESOLUTION, _SUMMARY_KINDS,
         )
+    whole = daily_summary(
+        readings,
+        zone=zone,
+        first_day=first,
+        last_day=last,
+        base_c=base_c,
+        sample_hours=ecowitt.SAMPLE_HOURS[_SUMMARY_RESOLUTION],
+    )
     return {
         "success": True,
         "station": found.as_dict(),
         "start_date": first.isoformat(),
         "end_date": last.isoformat(),
-        **daily_summary(
-            readings,
-            zone=zone,
-            first_day=first,
-            last_day=last,
-            base_c=base_c,
-            sample_hours=ecowitt.SAMPLE_HOURS[_SUMMARY_RESOLUTION],
-        ),
+        **whole,
+        **page_of_days(whole["days"], sort_col=sort_col, sort_dir=sort_dir, page=page, page_size=page_size),
     }
 
 

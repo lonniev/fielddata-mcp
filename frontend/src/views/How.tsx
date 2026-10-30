@@ -13,12 +13,15 @@ const STEPS: { title: string; says: string }[] = [
 
 export default function How() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-3xl">How it works</h1>
-      <ol className="mt-6 space-y-3">
+    <div className="page space-y-4">
+      <header className="card flex flex-wrap items-center gap-3 p-5">
+        <h1 className="text-3xl">How it works</h1>
+        <Link to="/signin" className="chip chip-accent ml-auto">Sign in</Link>
+      </header>
+      <ol className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {STEPS.map((s, i) => (
-          <li key={s.title} className="card flex gap-4 p-4">
-            <span className="font-mono text-lg text-[var(--tb-accent)]">{i + 1}</span>
+          <li key={s.title} className="card flex gap-4 p-5">
+            <span className="font-mono text-2xl text-[var(--tb-accent)]">{i + 1}</span>
             <div>
               <h2 className="text-lg">{s.title}</h2>
               <p className="prose-line text-sm">{s.says}</p>
@@ -26,13 +29,12 @@ export default function How() {
           </li>
         ))}
       </ol>
-      <section className="card mt-6 p-5">
+      <section className="card p-5">
         <h2 className="text-lg">For your AI agent</h2>
         <p className="prose-line mt-1 text-sm">
           Add <code className="font-mono">https://fielddata-mcp.fastmcp.app/mcp</code> as a remote MCP server, and your agent reads the same stations under the same balance.
         </p>
       </section>
-      <p className="mt-6 text-center"><Link to="/signin" className="chip chip-accent">Sign in</Link></p>
     </div>
   );
 }

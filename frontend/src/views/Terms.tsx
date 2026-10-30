@@ -21,6 +21,10 @@ const SECTIONS: { title: string; says: string[] }[] = [
   { title: "Your key to the account", says: [
     "Your Nostr key is your identity here, and nobody can recover it for you.",
   ] },
+  { title: "The Catalog", says: [
+    "The Catalog shows collections from the Good Brew café, and FieldData takes no orders.",
+    "Orders, payment and delivery are between you and the café, under the café's own terms.",
+  ] },
   { title: "Marks", says: [
     "DPYC™, Tollbooth DPYC™ and Don't Pester Your Customer™ are marks of Lonnie VanZandt.",
     "Ecowitt is a trademark of its owner, and no affiliation or endorsement is implied.",
@@ -29,16 +33,18 @@ const SECTIONS: { title: string; says: string[] }[] = [
 
 export default function Terms() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-3xl">Terms of use</h1>
-      {SECTIONS.map((s) => (
-        <section key={s.title} className="mt-6">
-          <h2 className="text-lg">{s.title}</h2>
-          {s.says.map((line) => (
-            <p key={line} className="prose-line mt-1 text-sm">{line}</p>
-          ))}
-        </section>
-      ))}
+    <div className="page space-y-4">
+      <header className="card p-5"><h1 className="text-3xl">Terms of use</h1></header>
+      <div className="columns-1 gap-4 md:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
+        {SECTIONS.map((s) => (
+          <section key={s.title} className="card p-5">
+            <h2 className="text-lg">{s.title}</h2>
+            {s.says.map((line) => (
+              <p key={line} className="prose-line mt-1 text-sm">{line}</p>
+            ))}
+          </section>
+        ))}
+      </div>
     </div>
   );
 }

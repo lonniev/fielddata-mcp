@@ -1,0 +1,5 @@
+- The site's look: a drawn vineyard, field and kitchen garden with robots and sensors behind every page, words on cards across the full width, and top-ups as farm-stand coupons beside "Need a wallet?".
+- A Sources page and Terms, both in the top navigation.
+- A Catalog that reads the Good Brew café's collections live and sends orders to the café.
+- `fielddata_summary` takes `sort_col`, `sort_dir`, `page` and `page_size`, and the Log sorts and pages through it.
+- The Panel shows every instrument on a made-up farm, plainly marked as illustrative, until a station reports; a stranger can open it without signing in.
