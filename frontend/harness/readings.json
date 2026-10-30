@@ -1,0 +1,132 @@
+[
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "air_temperature",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 53.17,
+  "unit": "°C",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "relative_humidity",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 52.0,
+  "unit": "%",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "pressure",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 891.975,
+  "unit": "hPa",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "wind_speed",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 20.966,
+  "unit": "m/s",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "wind_direction",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 267.0,
+  "unit": "deg",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "rain_rate",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 6161.024,
+  "unit": "mm/h",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "rain_total",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 8450.326,
+  "unit": "mm",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "solar_radiation",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 101.8,
+  "unit": "W/m²",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "uv_index",
+  "channel": null,
+  "channel_name": null,
+  "quantity": 7.0,
+  "unit": "index",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "soil_moisture",
+  "channel": 1,
+  "channel_name": null,
+  "quantity": 79.0,
+  "unit": "%",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "soil_moisture",
+  "channel": 2,
+  "channel_name": null,
+  "quantity": 19.0,
+  "unit": "%",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "soil_temperature",
+  "channel": 1,
+  "channel_name": null,
+  "quantity": 17.94,
+  "unit": "°C",
+  "observed_at": "2022-02-23T06:00:32Z"
+ },
+ {
+  "station_id": "harness",
+  "vendor": "ecowitt",
+  "sensor_kind": "leaf_wetness",
+  "channel": 1,
+  "channel_name": null,
+  "quantity": 73.0,
+  "unit": "%",
+  "observed_at": "2022-02-23T06:00:32Z"
+ }
+]

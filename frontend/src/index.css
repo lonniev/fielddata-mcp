@@ -1,0 +1,177 @@
+@import "tailwindcss";
+@import "@tollbooth-dpyc/web/theme.css";
+@import "@tollbooth-dpyc/web/price-sheet.css";
+@import "@tollbooth-dpyc/web/tour.css";
+@source "../node_modules/@tollbooth-dpyc/web/dist";
+
+@theme {
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Chart paper and ink by day. */
+:root {
+  --tb-accent: #8a6420;
+  --tb-on-accent: #fffaf0;
+  --tb-surface: #fffdf7;
+  --tb-surface-2: #f2ecdd;
+  --tb-ink: #231f17;
+  --tb-muted: #6c6453;
+  --tb-line: #d9cfb8;
+  --tb-ok: #3b7a52;
+  --page: #f7f2e6;
+  --dial-face: #fffdf6;
+  --dial-rim: #a97f36;
+  --dial-rim-deep: #6d4f1c;
+  --dial-ink: #2b261c;
+  --dial-mute: #7a705c;
+  --needle: #a8321f;
+  --mercury: #a8321f;
+  --water: #2f6c8f;
+  --trace: #2f6c8f;
+}
+
+/* The binnacle by night: engraved faces, brass and a red lamp. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --tb-accent: #c9a15a;
+    --tb-on-accent: #17120a;
+    --tb-surface: #15181c;
+    --tb-surface-2: #1e2227;
+    --tb-ink: #ece5d6;
+    --tb-muted: #9d9685;
+    --tb-line: #2d3136;
+    --tb-ok: #7fb893;
+    --tb-warn-bg: #2a2110;
+    --tb-warn-line: #5c4717;
+    --tb-warn-ink: #e3b341;
+    --tb-err-bg: #2c1515;
+    --tb-err-line: #5e2525;
+    --tb-err-ink: #f4a3a3;
+    --tb-notice-bg: #1c2230;
+    --tb-notice-line: #36425c;
+    --tb-notice-ink: #b9c8e6;
+    --page: #0c0e11;
+    --dial-face: #101317;
+    --dial-rim: #c9a15a;
+    --dial-rim-deep: #6b5128;
+    --dial-ink: #ece5d6;
+    --dial-mute: #8e8878;
+    --needle: #e4573d;
+    --mercury: #e4573d;
+    --water: #5fa8cc;
+    --trace: #e4573d;
+  }
+}
+:root[data-theme="dark"] {
+  --tb-accent: #c9a15a;
+  --tb-on-accent: #17120a;
+  --tb-surface: #15181c;
+  --tb-surface-2: #1e2227;
+  --tb-ink: #ece5d6;
+  --tb-muted: #9d9685;
+  --tb-line: #2d3136;
+  --tb-ok: #7fb893;
+  --tb-warn-bg: #2a2110;
+  --tb-warn-line: #5c4717;
+  --tb-warn-ink: #e3b341;
+  --tb-err-bg: #2c1515;
+  --tb-err-line: #5e2525;
+  --tb-err-ink: #f4a3a3;
+  --tb-notice-bg: #1c2230;
+  --tb-notice-line: #36425c;
+  --tb-notice-ink: #b9c8e6;
+  --page: #0c0e11;
+  --dial-face: #101317;
+  --dial-rim: #c9a15a;
+  --dial-rim-deep: #6b5128;
+  --dial-ink: #ece5d6;
+  --dial-mute: #8e8878;
+  --needle: #e4573d;
+  --mercury: #e4573d;
+  --water: #5fa8cc;
+  --trace: #e4573d;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--tb-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+h1,
+h2,
+.font-display {
+  font-family: var(--font-display);
+}
+
+@layer components {
+  .card {
+    border: 1px solid var(--tb-line);
+    border-radius: 0.875rem;
+    background: var(--tb-surface);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding: 0.375rem 0.875rem;
+    border: 1px solid var(--tb-line);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    color: var(--tb-ink);
+  }
+  .chip:hover:not(:disabled) {
+    background: var(--tb-surface-2);
+  }
+  .chip:disabled {
+    opacity: 0.45;
+  }
+  .chip-on {
+    border-color: var(--tb-accent);
+    color: var(--tb-accent);
+  }
+  .chip-accent {
+    border-color: var(--tb-accent);
+    background: var(--tb-accent);
+    color: var(--tb-on-accent);
+  }
+  .chip-accent:hover:not(:disabled) {
+    background: var(--tb-accent);
+    filter: brightness(1.08);
+  }
+  .field {
+    min-height: 2.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--tb-line);
+    border-radius: 0.5rem;
+    background: var(--tb-surface);
+    color: var(--tb-ink);
+    font-size: 0.875rem;
+  }
+  .prose-line {
+    color: var(--tb-muted);
+    line-height: 1.6;
+  }
+}
+
+.tb-ps {
+  --tb-ps-display-font: var(--font-display);
+  --tb-ps-card: var(--tb-surface);
+}
+.tb-ps-fare-n {
+  font-family: var(--font-mono);
+  color: var(--tb-accent);
+}
+
+/* A needle sweeps to its reading unless the patron asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .needle {
+    transition: transform 900ms cubic-bezier(0.3, 1.25, 0.5, 1);
+  }
+  .fluid {
+    transition: y 900ms ease-out, height 900ms ease-out;
+  }
+}

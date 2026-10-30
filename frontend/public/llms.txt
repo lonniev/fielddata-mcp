@@ -1,0 +1,7 @@
+# FieldData
+
+FieldData reports what a grower's own weather station and soil probes measured.
+It is a Tollbooth DPYC™ operator, paid per call in sats from a pre-funded balance.
+
+MCP endpoint: https://fielddata-mcp.fastmcp.app/mcp
+Source: https://github.com/lonniev/fielddata-mcp

@@ -5,6 +5,8 @@ FieldData reads a grower's weather station and soil probes through the vendor's 
 Every reading comes back in one shape, in SI units and UTC, whatever station made it.
 It is a DPYC™ Tollbooth operator: patrons pay per call in sats from a pre-funded balance.
 
+The web app at https://fielddata.tollbooth-dpyc.com reads the same tools as a panel of instruments.
+
 Good Earth is its first consumer.
 Good Earth projects what a block of ground should do; FieldData reports what it did.
 The two share no code; the contract between them is `fielddata_summary`.
