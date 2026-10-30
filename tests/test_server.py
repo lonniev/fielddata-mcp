@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from fielddata_mcp import ecowitt, server
+from fielddata_mcp import ambient, ecowitt, server
 from fielddata_mcp.readings import Station
 
 NOW = datetime(2026, 10, 29, 12, tzinfo=UTC)
@@ -53,19 +53,19 @@ async def test_field_tools_carry_the_fielddata_prefix_and_no_vendor_name():
 ])
 def test_auto_picks_the_finest_resolution_that_fits(span, age, expected):
     start = NOW - age
-    assert server._choose_resolution("auto", start, start + span, NOW) == expected
+    assert server._choose_resolution("auto", start, start + span, NOW, ecowitt.HISTORY_LIMITS) == expected
 
 
 @pytest.mark.parametrize(("resolution", "span", "age", "message"), [
     ("5min", timedelta(days=2), timedelta(days=3), "at most 1 day"),
     ("5min", timedelta(hours=1), timedelta(days=100), "reaches back only 90"),
     ("hourly", timedelta(hours=1), timedelta(days=1), "resolution must be"),
-    ("auto", timedelta(days=400), timedelta(days=500), "longer than one request"),
+    ("auto", timedelta(days=400), timedelta(days=500), "longer than one call"),
 ])
 def test_resolution_limits_refuse_by_name(resolution, span, age, message):
     start = NOW - age
     with pytest.raises(ValueError, match=message):
-        server._choose_resolution(resolution, start, start + span, NOW)
+        server._choose_resolution(resolution, start, start + span, NOW, ecowitt.HISTORY_LIMITS)
 
 
 def test_weekly_windows_cover_local_days_without_overlap():
@@ -157,10 +157,10 @@ async def test_answers_are_cached_per_patron(stored_keys):
         hits.append(keys)
         return ["answer"]
 
-    assert await server._vendor(NPUB, "stations", fetch) == ["answer"]
-    assert await server._vendor(NPUB, "stations", fetch) == ["answer"]
+    assert await server._vendor(NPUB, "ecowitt", "stations", fetch) == ["answer"]
+    assert await server._vendor(NPUB, "ecowitt", "stations", fetch) == ["answer"]
     assert len(hits) == 1
-    await server._vendor("npub1other", "stations", fetch)
+    await server._vendor("npub1other", "ecowitt", "stations", fetch)
     assert len(hits) == 2
 
 
@@ -169,15 +169,15 @@ async def test_vendor_failure_raises_so_the_fare_is_refunded(stored_keys):
         raise ecowitt.EcowittError("Ecowitt is busy. Retry shortly.", code=-1)
 
     with pytest.raises(ValueError, match="busy"):
-        await server._vendor(NPUB, "stations", fetch)
+        await server._vendor(NPUB, "ecowitt", "stations", fetch)
 
 
 async def test_rejected_keys_are_dropped_and_named(stored_keys):
     async def fetch(keys):
         raise ecowitt.EcowittError("rejected", code=40011)
 
-    with pytest.raises(ValueError, match="rejected the stored keys") as caught:
-        await server._vendor(NPUB, "stations", fetch)
+    with pytest.raises(ValueError, match="Your Ecowitt account rejected the stored keys") as caught:
+        await server._vendor(NPUB, "ecowitt", "stations", fetch)
     assert "SECRET" not in str(caught.value)
     assert server._keys.get(NPUB) is None
 
@@ -206,7 +206,7 @@ async def test_summary_tool_pages_its_ordered_days_and_totals_the_whole_range(mo
     async def station(npub, name):
         return make_station("Back forty", "s1")
 
-    async def vendor(npub, cache_key, fn, *args):
+    async def vendor(npub, vendor, cache_key, fn, *args):
         return []
 
     monkeypatch.setattr(server, "_resolve_station", station)
@@ -225,7 +225,7 @@ async def test_summary_tool_returns_the_whole_range_in_date_order_by_default(mon
     async def station(npub, name):
         return make_station("Back forty", "s1")
 
-    async def vendor(npub, cache_key, fn, *args):
+    async def vendor(npub, vendor, cache_key, fn, *args):
         return []
 
     monkeypatch.setattr(server, "_resolve_station", station)
@@ -235,3 +235,135 @@ async def test_summary_tool_returns_the_whole_range_in_date_order_by_default(mon
 
     assert [d["date"] for d in out["days"]] == [f"2026-10-0{n}" for n in range(1, 9)]
     assert out["total"] == 8
+
+
+# ---------------------------------------------------------------------------
+# Two vendors
+# ---------------------------------------------------------------------------
+
+BOTH = {
+    "ecowitt_application_key": "EA-SECRET", "ecowitt_api_key": "EB-SECRET",
+    "ambient_application_key": "AA-SECRET", "ambient_api_key": "AB-SECRET",
+}
+ONLY_AMBIENT = {"ambient_application_key": "AA-SECRET", "ambient_api_key": "AB-SECRET"}
+
+
+def load_returning(monkeypatch, creds):
+    async def load(npub):
+        return creds, ""
+
+    monkeypatch.setattr(server.runtime, "load_patron_session", load)
+
+
+async def test_a_half_pair_of_one_vendor_does_not_hide_the_other(monkeypatch):
+    load_returning(monkeypatch, {**ONLY_AMBIENT, "ecowitt_api_key": "HALF"})
+    held = await server._require_keys(NPUB)
+    assert set(held) == {"ambient"} and isinstance(held["ambient"], ambient.AmbientKeys)
+
+
+async def test_stations_are_the_union_of_connected_accounts(monkeypatch):
+    load_returning(monkeypatch, BOTH)
+
+    async def eco(keys):
+        assert keys.api_key == "EB-SECRET"
+        return [make_station("Barn", "e1")]
+
+    async def amb(keys):
+        assert keys.api_key == "AB-SECRET"
+        return [make_station("Vines", "a1")]
+
+    monkeypatch.setattr(ecowitt, "list_stations", eco)
+    monkeypatch.setattr(ambient, "list_stations", amb)
+    assert {s.station_id for s in await server._stations(NPUB)} == {"e1", "a1"}
+
+
+async def test_one_vendor_only_never_calls_the_other(monkeypatch):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+
+    async def eco(keys):
+        raise AssertionError("Ecowitt was called with no Ecowitt keys")
+
+    async def amb(keys):
+        return [make_station("Vines", "a1")]
+
+    monkeypatch.setattr(ecowitt, "list_stations", eco)
+    monkeypatch.setattr(ambient, "list_stations", amb)
+    assert [s.station_id for s in await server._stations(NPUB)] == ["a1"]
+
+
+async def test_current_goes_to_the_stations_own_vendor(monkeypatch):
+    load_returning(monkeypatch, BOTH)
+    called = []
+
+    async def amb(keys, station):
+        called.append(keys.api_key)
+        return []
+
+    monkeypatch.setattr(ambient, "real_time", amb)
+    station = Station(
+        station_id="a1", vendor="ambient", name="Vines", timezone="UTC",
+        latitude=None, longitude=None, model="", device_ref={"mac": "AA"},
+    )
+    await server._current(NPUB, station)
+    assert called == ["AB-SECRET"]
+
+
+async def test_rejected_ambient_keys_name_ambient(monkeypatch):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+
+    async def fetch(keys):
+        raise server.VendorError("no", rejects_keys=True)
+
+    with pytest.raises(ValueError, match="Your Ambient Weather account rejected") as caught:
+        await server._vendor(NPUB, "ambient", "stations", fetch)
+    assert "SECRET" not in str(caught.value)
+
+
+def test_each_vendor_has_its_own_resolutions():
+    start = NOW - timedelta(days=20)
+    assert server._choose_resolution("auto", start, NOW, NOW, ambient.HISTORY_LIMITS) == "30min"
+    with pytest.raises(ValueError, match="auto, 5min, 30min."):
+        server._choose_resolution("1day", start, NOW, NOW, ambient.HISTORY_LIMITS)
+
+
+def test_the_summary_resolution_exists_for_every_vendor():
+    for adapter in server.ADAPTERS.values():
+        assert server._SUMMARY_RESOLUTION in adapter.HISTORY_LIMITS
+        assert server._SUMMARY_RESOLUTION in adapter.SAMPLE_HOURS
+
+
+@pytest.mark.parametrize(("stored", "ready", "missing_has"), [
+    ({}, False, "ambient_api_key"),
+    ({"ecowitt_api_key": "x"}, False, "ecowitt_application_key"),
+    ({"ecowitt_api_key": "x", "ambient_application_key": "y"}, False, "ambient_api_key"),
+    ({"ecowitt_application_key": "x", "ecowitt_api_key": "y"}, True, None),
+    (ONLY_AMBIENT, True, None),
+    (BOTH, True, None),
+])
+async def test_ready_needs_one_whole_pair(monkeypatch, stored, ready, missing_has):
+    async def blob(service, npub_override=None):
+        return stored, ""
+
+    async def courier():
+        return None
+
+    monkeypatch.setattr(server.runtime, "_load_vault_blob", blob)
+    monkeypatch.setattr(server.runtime, "courier", courier)
+    status = await server.runtime.patron_onboarding_status(NPUB)
+    assert status["ready"] is ready
+    if missing_has:
+        assert missing_has in {m["field"] for m in status["missing"]}
+
+
+async def test_an_unread_vault_is_never_called_ready_or_absent(monkeypatch):
+    async def blob(service, npub_override=None):
+        return {}, "vault_bootstrapping"
+
+    async def courier():
+        return None
+
+    monkeypatch.setattr(server.runtime, "_load_vault_blob", blob)
+    monkeypatch.setattr(server.runtime, "courier", courier)
+    status = await server.runtime.patron_onboarding_status(NPUB)
+    assert status["ready"] is False
+    assert {m["status"] for m in status["missing"]} == {"unknown"}

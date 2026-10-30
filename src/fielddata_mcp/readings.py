@@ -42,6 +42,14 @@ def station_id_for(vendor: str, device_key: str) -> str:
     return str(uuid.uuid5(_STATION_NAMESPACE, f"{vendor}:{device_key}"))
 
 
+class VendorError(Exception):
+    """A vendor failure worth naming to the caller. Never carries a key or a URL."""
+
+    def __init__(self, message: str, *, rejects_keys: bool = False) -> None:
+        super().__init__(message)
+        self.rejects_keys = rejects_keys
+
+
 @dataclass(frozen=True)
 class Station:
     """One vendor device as the patron's account reports it.

@@ -1,0 +1,22 @@
+[
+  {
+    "macAddress": "00:0E:C6:00:00:01",
+    "info": {
+      "name": "Vineyard",
+      "location": "Home",
+      "coords": { "coords": { "lat": 44.26, "lon": -72.57 }, "elevation": 200, "address": "", "location": "" }
+    },
+    "lastData": {
+      "dateutc": 1793368800000, "date": "2026-10-30T14:00:00.000Z", "tz": "America/New_York",
+      "tempf": 50.0, "humidity": 64, "baromrelin": 30.0, "baromabsin": 29.5,
+      "windspeedmph": 10.0, "windgustmph": 15.0, "winddir": 292,
+      "hourlyrainin": 0.1, "dailyrainin": 0.5, "monthlyrainin": 3.0,
+      "solarradiation": 420.5, "uv": 4,
+      "tempinf": 70.0, "humidityin": 40,
+      "temp1f": 99.0, "humidity1": 11,
+      "soilhum1": 34, "soilhum3": 41, "soiltemp1f": 59.0, "leafwetness2": 18
+    }
+  },
+  { "macAddress": "00:0E:C6:00:00:02", "info": {}, "lastData": { "dateutc": 1793368800000, "tempinf": 68.0, "humidityin": 45, "baromrelin": null } },
+  { "info": { "name": "No address" } }
+]

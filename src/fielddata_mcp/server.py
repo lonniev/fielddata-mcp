@@ -24,10 +24,12 @@ from tollbooth.runtime import OperatorRuntime, register_standard_tools
 from tollbooth.session_cache import SessionCache
 from tollbooth.tool_identity import READS_REMOTE, STANDARD_IDENTITIES, ToolIdentity
 
-from fielddata_mcp import __version__, ecowitt
+from fielddata_mcp import __version__, ambient, ecowitt
 from fielddata_mcp.readings import (
     SENSOR_KINDS,
+    Reading,
     Station,
+    VendorError,
     daily_summary,
     page_of_days,
     parse_day,
@@ -55,8 +57,10 @@ mcp = FastMCP(
         "The web app at https://fielddata.tollbooth-dpyc.com shows the same readings as a panel of instruments.\n\n"
         "## Bring your own station keys\n"
         "Your stations stay on your own vendor account, and this operator reads them with your keys.\n"
+        "FieldData reads Ecowitt and Ambient Weather stations, and you may connect either account or both.\n"
         "For an Ecowitt station, make an Application Key and an API Key at ecowitt.net under your account's "
         "API settings.\n"
+        "For an Ambient Weather station, make an API Key and an Application Key at ambientweather.net/account.\n"
         "1. Call `fielddata_get_patron_onboarding_status` to see what is missing.\n"
         "2. Call `fielddata_request_patron_credentials` with your npub — you get a Nostr DM.\n"
         "3. Reply with your keys.\n"
@@ -124,7 +128,78 @@ TOOL_REGISTRY: dict[str, ToolIdentity] = {ti.tool_id: ti for ti in _DOMAIN_TOOLS
 # OperatorRuntime
 # ---------------------------------------------------------------------------
 
-runtime = OperatorRuntime(
+# Vendor → its adapter and the two credential fields that make its keys.
+ADAPTERS: dict[str, Any] = {ecowitt.VENDOR: ecowitt, ambient.VENDOR: ambient}
+_KEY_FIELDS: dict[str, tuple[str, str, Any]] = {
+    ecowitt.VENDOR: ("ecowitt_application_key", "ecowitt_api_key", ecowitt.EcowittKeys),
+    ambient.VENDOR: ("ambient_application_key", "ambient_api_key", ambient.AmbientKeys),
+}
+
+
+class FieldDataRuntime(OperatorRuntime):
+    """Readiness for a patron who may hold either vendor's keys.
+
+    Every key field is optional, since no one vendor is required, and the SDK
+    calls a template with no required field ready. Here ready needs one whole pair.
+    """
+
+    async def patron_onboarding_status(self, patron_npub: str) -> dict[str, Any]:
+        status = await super().patron_onboarding_status(patron_npub)
+        have = {entry["field"] for entry in status["configured"]}
+        if any(app in have and api in have for app, api, _ in _KEY_FIELDS.values()):
+            return status
+        situation = status.get("vault_situation")
+        missing = [
+            {
+                "field": name,
+                "category": "patron_secret",
+                "status": "unknown" if situation else "missing",
+                "lifecycle": spec.lifecycle,
+                "how": spec.description,
+            }
+            for name, spec in _PATRON_TEMPLATE.fields.items()
+            if name not in have
+        ]
+        summary = status["summary"] if situation else (
+            "Missing: both keys of one station account, Ecowitt or Ambient Weather."
+        )
+        return {**status, "ready": False, "missing": missing, "summary": summary}
+
+
+# Each patron brings their own vendor keys; the operator holds no vendor account.
+# Field names carry the vendor because both vendors use the same two names, and
+# each is optional because a patron may hold either pair or both.
+_PATRON_TEMPLATE = CredentialTemplate(
+    service="fielddata",
+    version=1,
+    description="Your own weather-station account keys: one whole pair, Ecowitt or Ambient Weather, or both",
+    fields={
+        "ecowitt_application_key": FieldSpec(
+            required=False, sensitive=True,
+            description=(
+                "Your Ecowitt Application Key. Log in at ecowitt.net, open your "
+                "account's API settings and create one."
+            ),
+        ),
+        "ecowitt_api_key": FieldSpec(
+            required=False, sensitive=True,
+            description="Your Ecowitt API Key, made in the same place as the Application Key.",
+        ),
+        "ambient_application_key": FieldSpec(
+            required=False, sensitive=True,
+            description=(
+                "Your Ambient Weather Application Key. Log in at ambientweather.net "
+                "and create one on your account page."
+            ),
+        ),
+        "ambient_api_key": FieldSpec(
+            required=False, sensitive=True,
+            description="Your Ambient Weather API Key, made in the same place as the Application Key.",
+        ),
+    },
+)
+
+runtime = FieldDataRuntime(
     service_name="FieldData",
     tool_registry={**STANDARD_IDENTITIES, **TOOL_REGISTRY},
     operator_credential_template=CredentialTemplate(
@@ -155,34 +230,15 @@ runtime = OperatorRuntime(
             ),
         },
     ),
-    # Each patron brings their own vendor keys; the operator holds no vendor account.
-    # Field names carry the vendor because Ambient Weather uses the same two names.
-    patron_credential_template=CredentialTemplate(
-        service="fielddata",
-        version=1,
-        description="Your own weather-station account keys",
-        fields={
-            "ecowitt_application_key": FieldSpec(
-                required=True, sensitive=True,
-                description=(
-                    "Your Ecowitt Application Key. Log in at ecowitt.net, open your "
-                    "account's API settings and create one."
-                ),
-            ),
-            "ecowitt_api_key": FieldSpec(
-                required=True, sensitive=True,
-                description="Your Ecowitt API Key, made in the same place as the Application Key.",
-            ),
-        },
-    ),
+    patron_credential_template=_PATRON_TEMPLATE,
     operator_credential_greeting=(
         "Hi — I'm FieldData, a Tollbooth service that reads growers' own field "
         "instruments. You (the operator) need to provide BTCPay credentials."
     ),
     patron_credential_greeting=(
         "Hi — I'm FieldData. You (or your AI agent) requested a credential channel. "
-        "Reply with your own station account keys; they are encrypted at rest and "
-        "used only for your calls."
+        "Reply with both keys of your Ecowitt account, your Ambient Weather account, or both; "
+        "they are encrypted at rest and used only for your calls."
     ),
     credential_validator=validate_btcpay_creds,
     on_forget=lambda service, npub: _on_credentials_forgotten(service, npub),
@@ -204,7 +260,7 @@ tool = register_standard_tools(
 # ---------------------------------------------------------------------------
 
 # A patron's keys, held only long enough to spare the vault a read per call.
-_keys: SessionCache[ecowitt.EcowittKeys] = SessionCache(ttl_seconds=900)
+_keys: SessionCache[dict[str, Any]] = SessionCache(ttl_seconds=900)
 # Vendor answers for about as long as the vendor's own refresh, so repeat calls
 # spend neither the patron's vendor quota nor a slow round trip. Keyed by npub.
 _answers: SessionCache[Any] = SessionCache(ttl_seconds=60, max_size=4096)
@@ -224,15 +280,15 @@ _SESSION_GUIDANCE: dict[str, str] = {
     "no_credentials": (
         "No station keys are stored for your identity. This is expected on first use. "
         "Action: call fielddata_request_patron_credentials with your npub, then reply "
-        "to the Nostr DM with your Ecowitt Application Key and API Key."
+        "to the Nostr DM with your Ecowitt or Ambient Weather Application Key and API Key."
     ),
     "credentials_revoked": (
         "Your station keys were cleared by a previous forget_credentials call. "
         "Action: call fielddata_request_patron_credentials to deliver fresh keys."
     ),
     "keys_rejected": (
-        "Your station account rejected the stored keys; they may have been deleted "
-        "at ecowitt.net. Action: call fielddata_request_patron_credentials to deliver fresh keys."
+        "Your {label} account rejected the stored keys; they may have been deleted there. "
+        "Action: call fielddata_request_patron_credentials to deliver fresh keys."
     ),
     "vault_bootstrapping": (
         "The server is establishing its encrypted connection to the credential vault. "
@@ -259,8 +315,8 @@ _SESSION_GUIDANCE: dict[str, str] = {
 }
 
 
-async def _require_keys(npub: str) -> ecowitt.EcowittKeys:
-    """Resolve ``npub`` to that patron's vendor keys, or refuse by name."""
+async def _require_keys(npub: str) -> dict[str, Any]:
+    """Resolve ``npub`` to that patron's keys, vendor by vendor, or refuse by name. A half pair is no pair."""
     if npub in _revoked_npubs:
         _keys.clear(npub)
         _revoked_npubs.discard(npub)
@@ -275,39 +331,53 @@ async def _require_keys(npub: str) -> ecowitt.EcowittKeys:
         raise ValueError(
             _SESSION_GUIDANCE.get(vault_situation, _SESSION_GUIDANCE["vault_bootstrapping"]),
         )
-    if creds and creds.get("ecowitt_application_key") and creds.get("ecowitt_api_key"):
-        return _keys.set(npub, ecowitt.EcowittKeys(
-            application_key=creds["ecowitt_application_key"],
-            api_key=creds["ecowitt_api_key"],
-        ))
+    held = {
+        vendor: make(application_key=creds[app], api_key=creds[api])
+        for vendor, (app, api, make) in _KEY_FIELDS.items()
+        if creds and creds.get(app) and creds.get(api)
+    }
+    if held:
+        return _keys.set(npub, held)
     if creds is not None:
         raise ValueError(_SESSION_GUIDANCE["operator_not_configured"])
     raise ValueError(_SESSION_GUIDANCE["no_credentials"])
 
 
-async def _vendor(npub: str, cache_key: str, fn: Any, *args: Any) -> Any:
-    """Call the adapter under the patron's keys, through the short cache.
+async def _vendor(npub: str, vendor: str, cache_key: str, fn: Any, *args: Any) -> Any:
+    """Call one vendor's adapter under the patron's keys, through the short cache.
 
     A vendor failure raises, so the fare is refunded; the patron is never
     charged for an answer that did not come.
     """
-    key = f"{npub}|{cache_key}"
+    key = f"{npub}|{vendor}|{cache_key}"
     hit = _answers.get(key)
     if hit is not None:
         return hit
-    keys = await _require_keys(npub)
+    keys = (await _require_keys(npub)).get(vendor)
+    if keys is None:
+        raise ValueError(_SESSION_GUIDANCE["no_credentials"])
     try:
         answer = await fn(keys, *args)
-    except ecowitt.EcowittError as exc:
+    except VendorError as exc:
         if exc.rejects_keys:
             _keys.clear(npub)
-            raise ValueError(_SESSION_GUIDANCE["keys_rejected"]) from None
+            raise ValueError(_SESSION_GUIDANCE["keys_rejected"].format(label=ADAPTERS[vendor].LABEL)) from None
         raise ValueError(str(exc)) from None
     return _answers.set(key, answer)
 
 
 async def _stations(npub: str) -> list[Station]:
-    return await _vendor(npub, "stations", ecowitt.list_stations)
+    """Every station on every account the patron has connected."""
+    found: list[Station] = []
+    for vendor in await _require_keys(npub):
+        found += await _vendor(npub, vendor, "stations", ADAPTERS[vendor].list_stations)
+    return found
+
+
+async def _current(npub: str, station: Station) -> list[Reading]:
+    return await _vendor(
+        npub, station.vendor, f"current|{station.station_id}", ADAPTERS[station.vendor].real_time, station,
+    )
 
 
 async def _resolve_station(npub: str, station: str) -> Station:
@@ -317,7 +387,7 @@ async def _resolve_station(npub: str, station: str) -> Station:
     """
     stations = await _stations(npub)
     if not stations:
-        raise ValueError("Your station account lists no devices. Register the gateway at ecowitt.net first.")
+        raise ValueError("Your station account lists no devices. Register the gateway with your vendor first.")
     wanted = (station or "").strip()
     if len(wanted) > 200:
         raise ValueError("station is too long.")
@@ -352,18 +422,28 @@ def _kinds(sensor_kind: str) -> frozenset[str]:
     return frozenset({sensor_kind})
 
 
-def _choose_resolution(resolution: str, start: datetime, end: datetime, now: datetime) -> str:
-    """Check a resolution against Ecowitt's span and reach limits, or pick the finest that fits."""
+def _choose_resolution(
+    resolution: str,
+    start: datetime,
+    end: datetime,
+    now: datetime,
+    limits: dict[str, tuple[int, int]],
+) -> str:
+    """Check a resolution against the vendor's span and reach limits, or pick the finest that fits."""
     span = end - start
     age = now - start
     if resolution == "auto":
-        for name, (span_days, reach_days) in ecowitt.HISTORY_LIMITS.items():
+        for name, (span_days, reach_days) in limits.items():
             if span <= timedelta(days=span_days) and age <= timedelta(days=reach_days):
                 return name
-        raise ValueError("That range is longer than one request can cover. Use at most 366 days within the last 4 years.")
-    if resolution not in ecowitt.HISTORY_LIMITS:
-        raise ValueError("resolution must be auto, 5min, 30min, 4hour or 1day.")
-    span_days, reach_days = ecowitt.HISTORY_LIMITS[resolution]
+        longest = max(s for s, _ in limits.values())
+        farthest = max(r for _, r in limits.values())
+        raise ValueError(
+            f"That range is longer than one call can cover. Use at most {longest} days within the last {farthest} days.",
+        )
+    if resolution not in limits:
+        raise ValueError("resolution must be auto, " + ", ".join(limits) + ".")
+    span_days, reach_days = limits[resolution]
     if span > timedelta(days=span_days):
         raise ValueError(f"At {resolution}, one request covers at most {span_days} day(s).")
     if age > timedelta(days=reach_days):
@@ -386,7 +466,7 @@ async def list_stations(npub: PatronNpub = "") -> dict[str, Any]:
     """
     out = []
     for station in await _stations(npub):
-        readings = await _vendor(npub, f"current|{station.station_id}", ecowitt.real_time, station)
+        readings = await _current(npub, station)
         sensors = sorted(
             {(r.sensor_kind, r.channel, r.channel_name) for r in readings},
             key=lambda s: (s[0], s[1] or 0),
@@ -413,7 +493,7 @@ async def current(
     """
     kinds = _kinds(sensor_kind)
     found = await _resolve_station(npub, station)
-    readings = await _vendor(npub, f"current|{found.station_id}", ecowitt.real_time, found)
+    readings = await _current(npub, found)
     return {
         "success": True,
         "station": found.as_dict(),
@@ -433,16 +513,20 @@ async def history(
 ) -> dict[str, Any]:
     """Get readings over a time range, one series per sensor and channel.
 
-    One call covers at most 1 day at 5min, 7 days at 30min, 31 days at 4hour
-    or 366 days at 1day. Finer data reaches back less far: 90 days at 5min,
-    365 at 30min, 730 at 4hour and 1460 at 1day.
+    An Ecowitt station: one call covers at most 1 day at 5min, 7 days at 30min,
+    31 days at 4hour or 366 days at 1day. Finer data reaches back less far: 90
+    days at 5min, 365 at 30min, 730 at 4hour and 1460 at 1day.
+
+    An Ambient Weather station: one call covers at most 7 days at 5min or 31 days
+    at 30min, within the last 365 days, and a long one takes a while because
+    Ambient allows one request a second.
 
     Args:
         start: Start time, ISO-8601 (a time without an offset is UTC).
         end: End time, ISO-8601, after start.
         station: The station's id, its name, or a part of its name only it has.
             Leave empty when you have one station.
-        resolution: auto (the finest the range allows), 5min, 30min, 4hour or 1day.
+        resolution: auto (the finest the range allows), or one the station's vendor offers.
         sensor_kind: Only this kind of reading, e.g. soil_temperature. Empty for all.
     """
     kinds = _kinds(sensor_kind)
@@ -453,12 +537,14 @@ async def history(
     if begin > now:
         raise ValueError("start is in the future.")
     finish = min(finish, now)
-    chosen = _choose_resolution(resolution, begin, finish, now)
     found = await _resolve_station(npub, station)
+    adapter = ADAPTERS[found.vendor]
+    chosen = _choose_resolution(resolution, begin, finish, now, adapter.HISTORY_LIMITS)
     readings = await _vendor(
         npub,
+        found.vendor,
         f"history|{found.station_id}|{utc_iso(begin)}|{utc_iso(finish)}|{chosen}|{','.join(sorted(kinds))}",
-        ecowitt.history, found, begin, finish, chosen, kinds,
+        adapter.history, found, begin, finish, chosen, kinds,
     )
     return {
         "success": True,
@@ -515,12 +601,13 @@ async def summary(
     if (last - first).days + 1 > _SUMMARY_MAX_DAYS:
         raise ValueError(f"A summary covers at most {_SUMMARY_MAX_DAYS} days.")
     found = await _resolve_station(npub, station)
+    adapter = ADAPTERS[found.vendor]
     zone = found.zone()
     now = datetime.now(UTC)
     today = now.astimezone(zone).date()
     if first > today:
         raise ValueError("start_date is in the future.")
-    if (today - first).days > ecowitt.HISTORY_LIMITS[_SUMMARY_RESOLUTION][1]:
+    if (today - first).days > adapter.HISTORY_LIMITS[_SUMMARY_RESOLUTION][1]:
         raise ValueError("A summary reaches back at most 365 days.")
     last = min(last, today)
 
@@ -528,8 +615,9 @@ async def summary(
     for begin, finish in _weekly_windows(first, last, zone, now):
         readings += await _vendor(
             npub,
+            found.vendor,
             f"history|{found.station_id}|{utc_iso(begin)}|{utc_iso(finish)}|{_SUMMARY_RESOLUTION}|summary",
-            ecowitt.history, found, begin, finish, _SUMMARY_RESOLUTION, _SUMMARY_KINDS,
+            adapter.history, found, begin, finish, _SUMMARY_RESOLUTION, _SUMMARY_KINDS,
         )
     whole = daily_summary(
         readings,
@@ -537,7 +625,7 @@ async def summary(
         first_day=first,
         last_day=last,
         base_c=base_c,
-        sample_hours=ecowitt.SAMPLE_HOURS[_SUMMARY_RESOLUTION],
+        sample_hours=adapter.SAMPLE_HOURS[_SUMMARY_RESOLUTION],
     )
     return {
         "success": True,

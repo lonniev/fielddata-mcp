@@ -27,7 +27,7 @@ const SECTIONS: { title: string; says: string[] }[] = [
   ] },
   { title: "Marks", says: [
     "DPYC™, Tollbooth DPYC™ and Don't Pester Your Customer™ are marks of Lonnie VanZandt.",
-    "Ecowitt is a trademark of its owner, and no affiliation or endorsement is implied.",
+    "Ecowitt and Ambient Weather are trademarks of their owners, and no affiliation or endorsement is implied.",
   ] },
 ];
 

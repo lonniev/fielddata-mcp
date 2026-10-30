@@ -3,10 +3,15 @@
 import { CAFE_URL } from "../lib/cafe";
 
 const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
-  { title: "Your own station", says: [
-    "Every reading comes from your own account on Ecowitt.net, through its version 3 API.",
+  { title: "Your Ecowitt station", says: [
+    "An Ecowitt station's readings come from your own account on Ecowitt.net, through its version 3 API.",
     "All Ecowitt gateways upload there, the 4G WittField included.",
   ], link: ["Ecowitt API reference", "https://doc.ecowitt.net/web/#/apiv3en"] },
+  { title: "Your Ambient Weather station", says: [
+    "An Ambient Weather station's readings come from your own account on ambientweather.net, through its REST API.",
+    "Ambient allows one request a second, so a long first read of the log can take around half a minute.",
+    "The log counts a day's rain from the station's daily total, and its extra temperature sensors are not read.",
+  ], link: ["Ambient Weather API reference", "https://github.com/ambient-weather/api-docs"] },
   { title: "Units and clocks", says: [
     "FieldData asks the vendor for SI units, then converts by the unit each value arrives with.",
     "Every reading is reported in UTC, and each day in the log is your station's own local day.",
@@ -21,7 +26,7 @@ const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
   ] },
   { title: "Rain", says: [
     "A day's rain is the highest value of the station's running total that day.",
-    "The vendor resets that total at local midnight.",
+    "Ecowitt resets that total at local midnight, and FieldData takes Ambient Weather's daily total to do the same.",
   ] },
   { title: "What is kept", says: [
     "Answers stay in a one-minute cache and readings are not stored.",
@@ -42,6 +47,11 @@ const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
   { title: "The code", says: [
     "FieldData and the Tollbooth DPYC™ runtime are open source under Apache-2.0.",
   ], link: ["FieldData source", "https://github.com/lonniev/fielddata-mcp"] },
+];
+
+const AMBIENT_REACH: [string, string, string][] = [
+  ["5 minutes", "7 days", "1 year"],
+  ["30 minutes", "31 days", "1 year"],
 ];
 
 const REACH: [string, string, string][] = [
@@ -67,13 +77,26 @@ export default function Sources() {
           </section>
         ))}
         <section className="card p-5">
-          <h2 className="text-lg">How far back the vendor reaches</h2>
+          <h2 className="text-lg">How far back Ecowitt reaches</h2>
           <table className="mt-2 w-full text-left text-sm">
             <thead className="text-[var(--tb-muted)]">
               <tr><th className="py-1 font-normal">Sample</th><th className="py-1 font-normal">Each request</th><th className="py-1 font-normal">Reach</th></tr>
             </thead>
             <tbody className="font-mono">
               {REACH.map(([sample, span, reach]) => (
+                <tr key={sample} className="border-t border-[var(--tb-line)]"><td className="py-1">{sample}</td><td className="py-1">{span}</td><td className="py-1">{reach}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+        <section className="card p-5">
+          <h2 className="text-lg">How far FieldData reads Ambient Weather</h2>
+          <table className="mt-2 w-full text-left text-sm">
+            <thead className="text-[var(--tb-muted)]">
+              <tr><th className="py-1 font-normal">Sample</th><th className="py-1 font-normal">Each call</th><th className="py-1 font-normal">Reach</th></tr>
+            </thead>
+            <tbody className="font-mono">
+              {AMBIENT_REACH.map(([sample, span, reach]) => (
                 <tr key={sample} className="border-t border-[var(--tb-line)]"><td className="py-1">{sample}</td><td className="py-1">{span}</td><td className="py-1">{reach}</td></tr>
               ))}
             </tbody>

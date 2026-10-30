@@ -101,7 +101,7 @@ function Footer() {
         <a href="https://tollbooth-dpyc.com" target="_blank" rel="noopener noreferrer" className="underline">Tollbooth DPYC™</a>
         {" · "}Apache-2.0 · Patent Pending (US Prov. 64/045,999)
       </div>
-      <div>Ecowitt is a trademark of its owner; no affiliation or endorsement is implied. Weather Icons by Erik Flowers, under the SIL OFL 1.1.</div>
+      <div>Ecowitt and Ambient Weather are trademarks of their owners; no affiliation or endorsement is implied. Weather Icons by Erik Flowers, under the SIL OFL 1.1.</div>
     </footer>
   );
 }
