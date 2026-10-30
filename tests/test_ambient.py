@@ -225,7 +225,7 @@ def test_the_mac_stays_out_of_what_a_tool_shows():
 
 
 # ---------------------------------------------------------------------------
-# Public stations
+# Published stations
 # ---------------------------------------------------------------------------
 
 PUBLIC_URL = "https://lightning.ambientweather.net/devices"
@@ -251,9 +251,9 @@ PUBLIC_ROW = {
 
 
 @respx.mock
-async def test_public_stations_give_each_devices_place_and_readings():
+async def test_nearby_give_each_devices_place_and_readings():
     route = respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": [PUBLIC_ROW, {"info": {}}]}))
-    found = await ambient.public_stations(-73.5, 44.0, -73.2, 44.2, limit=5)
+    found = await ambient.nearby(-73.5, 44.0, -73.2, 44.2, limit=5)
     assert len(found) == 1
     station_, readings = found[0]
     assert (station_.name, station_.latitude, station_.longitude) == ("Neighbor", 44.1, -73.3)
@@ -266,9 +266,9 @@ async def test_public_stations_give_each_devices_place_and_readings():
 
 
 @respx.mock
-async def test_public_stations_send_no_keys_and_show_no_mac():
+async def test_nearby_send_no_keys_and_show_no_mac():
     route = respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": [PUBLIC_ROW]}))
-    found = await ambient.public_stations(-74.0, 44.0, -73.0, 45.0)
+    found = await ambient.nearby(-74.0, 44.0, -73.0, 45.0)
     params = route.calls[0].request.url.params
     assert "apiKey" not in params and "applicationKey" not in params
     assert MAC not in str(found[0][0].as_dict())
@@ -276,21 +276,45 @@ async def test_public_stations_send_no_keys_and_show_no_mac():
 
 
 @respx.mock
-async def test_public_stations_cap_the_limit():
+async def test_nearby_cap_the_limit():
     route = respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": []}))
-    assert await ambient.public_stations(-74.0, 44.0, -73.0, 45.0, limit=9999) == []
+    assert await ambient.nearby(-74.0, 44.0, -73.0, 45.0, limit=9999) == []
     assert route.calls[0].request.url.params["$limit"] == str(ambient._MAX_PUBLIC_STATIONS)
 
 
 @pytest.mark.parametrize("box", [(-73.0, 44.0, -74.0, 45.0), (-74.0, 45.0, -73.0, 44.0), (-200.0, 44.0, -73.0, 45.0), (-74.0, 44.0, -73.0, 95.0)])
-async def test_public_stations_refuse_a_box_that_makes_no_sense(box):
+async def test_nearby_refuse_a_box_that_makes_no_sense(box):
     with pytest.raises(ValueError, match="box"):
-        await ambient.public_stations(*box)
+        await ambient.nearby(*box)
 
 
 @pytest.mark.parametrize("response", [httpx.Response(200, json=[]), httpx.Response(500)])
 @respx.mock
-async def test_public_stations_name_a_bad_answer(response):
+async def test_nearby_name_a_bad_answer(response):
     respx.get(PUBLIC_URL).mock(return_value=response)
     with pytest.raises(VendorError):
-        await ambient.public_stations(-74.0, 44.0, -73.0, 45.0)
+        await ambient.nearby(-74.0, 44.0, -73.0, 45.0)
+
+
+@respx.mock
+async def test_with_no_keys_a_published_stations_readings_come_from_around_its_place():
+    route = respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": [PUBLIC_ROW]}))
+    published = ambient._station(PUBLIC_ROW)
+    readings = await ambient.real_time(None, published)
+    assert value(readings, "air_temperature") == 10.0
+    params = route.calls[0].request.url.params
+    assert float(params["$publicBox[0][0]"]) < -73.3 < float(params["$publicBox[1][0]"])
+    assert "apiKey" not in params
+
+
+@respx.mock
+async def test_a_station_no_longer_published_says_so():
+    respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": []}))
+    with pytest.raises(VendorError, match="no longer publishes"):
+        await ambient.real_time(None, ambient._station(PUBLIC_ROW))
+
+
+async def test_history_with_no_keys_is_the_vendors_limit():
+    end = datetime(2026, 10, 30, tzinfo=UTC)
+    with pytest.raises(VendorError, match="only to its owner"):
+        await ambient.history(None, ambient._station(PUBLIC_ROW), end - timedelta(days=1), end, "30min", FULL)

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, date, datetime, time, timedelta
+from math import asin, cos, radians, sin, sqrt
 from typing import Any
 
 from fastmcp import FastMCP
@@ -20,6 +21,7 @@ from mcp.types import Icon
 from tollbooth.credential_templates import CredentialTemplate, FieldSpec
 from tollbooth.credential_validators import validate_btcpay_creds
 from tollbooth.params import PatronNpub
+from tollbooth.properties import PropertySpec
 from tollbooth.runtime import OperatorRuntime, register_standard_tools
 from tollbooth.session_cache import SessionCache
 from tollbooth.tool_identity import READS_REMOTE, STANDARD_IDENTITIES, ToolIdentity
@@ -35,6 +37,7 @@ from fielddata_mcp.readings import (
     parse_day,
     parse_utc,
     series,
+    short_station_id,
     utc_iso,
 )
 
@@ -53,6 +56,9 @@ mcp = FastMCP(
         "fielddata_current gives a station's latest readings.\n"
         "fielddata_history gives readings over a time range.\n"
         "fielddata_summary gives daily temperature, frost hours, rain and degree-days.\n"
+        "fielddata_nearby_stations finds stations whose owners publish them near a place. "
+        "Add one to your stations by putting its `choice` in your chosen_stations property "
+        "with fielddata_set_my_property; every tool then reads it like any other.\n"
         "Every reading is in SI units and UTC, whatever station made it.\n"
         "The web app at https://fielddata.tollbooth-dpyc.com shows the same readings as a panel of instruments.\n\n"
         "## Bring your own station keys\n"
@@ -86,6 +92,7 @@ LIST_STATIONS_UUID = "6df77ba3-ac6a-4b0f-8577-677f9337b5d1"
 CURRENT_READINGS_UUID = "49ed55e2-864c-4424-a546-4ffc93c864e0"
 READING_HISTORY_UUID = "c731f39a-66ee-4960-a3aa-4b6b70e1c44d"
 DAILY_SUMMARY_UUID = "951d0219-e985-4f57-8897-34868d67a058"
+NEARBY_STATIONS_UUID = "99790a9c-28a7-44c9-af35-21cf8f6d4bba"
 
 _DOMAIN_TOOLS = [
     ToolIdentity(
@@ -119,6 +126,14 @@ _DOMAIN_TOOLS = [
         title="Daily summary",
         behavior=READS_REMOTE,
         intent="Daily temperature, frost hours, rain and degree-days",
+    ),
+    ToolIdentity(
+        tool_id=NEARBY_STATIONS_UUID,
+        capability="nearby_stations",
+        category="read",
+        title="Nearby stations",
+        behavior=READS_REMOTE,
+        intent="Find stations whose owners publish them near a place, to choose from",
     ),
 ]
 
@@ -182,6 +197,15 @@ class FieldDataRuntime(OperatorRuntime):
         _forget_cached_keys(patron_npub)
         return stored
 
+
+PATRON_PROPERTIES = {
+    "chosen_stations": PropertySpec(
+        kind="list",
+        default=[],
+        label="Chosen stations",
+        description="Stations you chose from fielddata_nearby_stations, each as that tool's `choice`.",
+    ),
+}
 
 # Each patron brings their own vendor keys; the operator holds no vendor account.
 # Field names carry the vendor because both vendors use the same two names, and
@@ -248,6 +272,7 @@ runtime = FieldDataRuntime(
         },
     ),
     patron_credential_template=_PATRON_TEMPLATE,
+    patron_properties=PATRON_PROPERTIES,
     operator_credential_greeting=(
         "Hi — I'm FieldData, a Tollbooth service that reads growers' own field "
         "instruments. You (the operator) need to provide BTCPay credentials."
@@ -342,17 +367,13 @@ _SESSION_GUIDANCE: dict[str, str] = {
 }
 
 
-async def _require_keys(npub: str) -> dict[str, Any]:
-    """Resolve ``npub`` to that patron's keys, vendor by vendor, or refuse by name. A half pair is no pair."""
+async def _held_keys(npub: str) -> dict[str, Any]:
+    """The patron's keys, vendor by vendor; empty when they hold none. A half pair is no pair."""
     if npub in _revoked_npubs:
-        _keys.clear(npub)
-        _revoked_npubs.discard(npub)
-        raise ValueError(_SESSION_GUIDANCE["credentials_revoked"])
-
+        return {}
     cached = _keys.get(npub)
     if cached:
         return cached
-
     creds, vault_situation = await runtime.load_patron_session(npub)
     if vault_situation:
         raise ValueError(
@@ -363,16 +384,26 @@ async def _require_keys(npub: str) -> dict[str, Any]:
         for vendor, (app, api, make) in _KEY_FIELDS.items()
         if creds and creds.get(app) and creds.get(api)
     }
+    return _keys.set(npub, held) if held else {}
+
+
+async def _require_keys(npub: str) -> dict[str, Any]:
+    """The patron's keys, or a refusal that says what to do."""
+    if npub in _revoked_npubs:
+        _keys.clear(npub)
+        _revoked_npubs.discard(npub)
+        raise ValueError(_SESSION_GUIDANCE["credentials_revoked"])
+    held = await _held_keys(npub)
     if held:
-        return _keys.set(npub, held)
-    if creds is not None:
-        raise ValueError(_SESSION_GUIDANCE["operator_not_configured"])
-    raise ValueError(_SESSION_GUIDANCE["no_credentials"])
+        return held
+    creds, _ = await runtime.load_patron_session(npub)
+    raise ValueError(_SESSION_GUIDANCE["operator_not_configured" if creds is not None else "no_credentials"])
 
 
 async def _vendor(npub: str, vendor: str, cache_key: str, fn: Any, *args: Any) -> Any:
-    """Call one vendor's adapter under the patron's keys, through the short cache.
+    """Call one vendor's adapter through the short cache, with the patron's keys if they hold them.
 
+    A vendor that publishes stations reads them with no keys; any other needs them.
     A vendor failure raises, so the fare is refunded; the patron is never
     charged for an answer that did not come.
     """
@@ -380,8 +411,9 @@ async def _vendor(npub: str, vendor: str, cache_key: str, fn: Any, *args: Any) -
     hit = _answers.get(key)
     if hit is not None:
         return hit
-    keys = (await _require_keys(npub)).get(vendor)
-    if keys is None:
+    keys = (await _held_keys(npub)).get(vendor)
+    if keys is None and not hasattr(ADAPTERS[vendor], "nearby"):
+        await _require_keys(npub)
         raise ValueError(_SESSION_GUIDANCE["no_credentials"])
     try:
         answer = await fn(keys, *args)
@@ -393,12 +425,80 @@ async def _vendor(npub: str, vendor: str, cache_key: str, fn: Any, *args: Any) -
     return _answers.set(key, answer)
 
 
+# A chosen station is saved as vendor:lat:lon:short_id. A property list item allows
+# 40 characters and no dot, so the place is in whole ten-thousandths of a degree
+# (about 11 m, well inside the margin a vendor looks around it) and the id is short.
+_PLACE_UNITS = 10_000
+
+
+def _choice(station: Station) -> str | None:
+    if station.latitude is None or station.longitude is None:
+        return None
+    latitude, longitude = round(station.latitude * _PLACE_UNITS), round(station.longitude * _PLACE_UNITS)
+    return f"{station.vendor}:{latitude}:{longitude}:{short_station_id(station.station_id)}"
+
+
+def _parse_choice(item: Any) -> tuple[str, float, float, str] | None:
+    """A saved choice, or None for one that names no vendor able to find it. Patrons and agents write these."""
+    parts = str(item).split(":", 3)
+    if len(parts) != 4 or not hasattr(ADAPTERS.get(parts[0]), "find_nearby"):
+        return None
+    try:
+        latitude, longitude = int(parts[1]) / _PLACE_UNITS, int(parts[2]) / _PLACE_UNITS
+    except ValueError:
+        return None
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return None
+    return parts[0], latitude, longitude, parts[3]
+
+
+async def _chosen_items(npub: str) -> list[Any]:
+    """What the patron saved; a read that fails means none, so it cannot take their own stations down."""
+    try:
+        stored = await (await runtime.property_store()).values(npub)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("chosen stations unreadable (%s); reading only the patron's accounts", type(exc).__name__)
+        return []
+    value = stored.get("chosen_stations", ([], ""))[0]
+    return value if isinstance(value, list) else []
+
+
+async def _find_chosen(npub: str, vendor: str, latitude: float, longitude: float, station_id: str) -> Station | None:
+    async def find(_keys_held: Any) -> Any:
+        return await ADAPTERS[vendor].find_nearby(station_id, latitude, longitude) or ()
+
+    found = await _vendor(npub, vendor, f"chosen|{station_id}", find)
+    return found[0] if found else None
+
+
+async def _retrieval_set(npub: str) -> tuple[list[Station], list[str]]:
+    """Every station the patron reads: on their accounts, and chosen. Also the chosen ones not answering."""
+    held = await _held_keys(npub)
+    choices = [c for c in map(_parse_choice, await _chosen_items(npub)) if c]
+    if not held and not choices:
+        await _require_keys(npub)
+    found: dict[str, Station] = {}
+    for vendor in held:
+        for station in await _vendor(npub, vendor, "stations", ADAPTERS[vendor].list_stations):
+            found[station.station_id] = station
+    unavailable: list[str] = []
+    owned = {short_station_id(sid) for sid in found}
+    for vendor, latitude, longitude, short_id in choices:
+        if short_id in owned:
+            continue
+        try:
+            station = await _find_chosen(npub, vendor, latitude, longitude, short_id)
+        except ValueError:
+            station = None
+        if station:
+            found[station.station_id] = station
+        else:
+            unavailable.append(short_id)
+    return list(found.values()), unavailable
+
+
 async def _stations(npub: str) -> list[Station]:
-    """Every station on every account the patron has connected."""
-    found: list[Station] = []
-    for vendor in await _require_keys(npub):
-        found += await _vendor(npub, vendor, "stations", ADAPTERS[vendor].list_stations)
-    return found
+    return (await _retrieval_set(npub))[0]
 
 
 async def _current(npub: str, station: Station) -> list[Reading]:
@@ -491,8 +591,9 @@ async def list_stations(npub: PatronNpub = "") -> dict[str, Any]:
     Stations come from your own station account; each has a stable station_id
     the other tools accept, as do its name or a part of the name only it has.
     """
+    stations, unavailable = await _retrieval_set(npub)
     out = []
-    for station in await _stations(npub):
+    for station in stations:
         readings = await _current(npub, station)
         sensors = sorted(
             {(r.sensor_kind, r.channel, r.channel_name) for r in readings},
@@ -501,6 +602,72 @@ async def list_stations(npub: PatronNpub = "") -> dict[str, Any]:
         out.append(station.as_dict() | {
             "sensors": [{"sensor_kind": k, "channel": c, "channel_name": n} for k, c, n in sensors],
         })
+    return {"success": True, "stations": out, "unavailable": unavailable}
+
+
+_NEARBY_MAX_KM = 100.0
+_KM_PER_DEGREE = 111.32
+
+
+def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    a, b = radians(lat1), radians(lat2)
+    h = sin((b - a) / 2) ** 2 + cos(a) * cos(b) * sin(radians(lon2 - lon1) / 2) ** 2
+    return 2 * 6371.0 * asin(sqrt(h))
+
+
+@tool
+@runtime.paid_tool(NEARBY_STATIONS_UUID)
+async def nearby_stations(
+    latitude: float,
+    longitude: float,
+    radius_km: float = 15.0,
+    npub: PatronNpub = "",
+) -> dict[str, Any]:
+    """Find stations whose owners publish them near a place, nearest first.
+
+    Each answer has a `choice`. Add it to your chosen_stations property and that
+    station joins your stations, read like any other.
+
+    Args:
+        latitude: The place's latitude in degrees.
+        longitude: The place's longitude in degrees.
+        radius_km: How far to look, up to 100 km.
+    """
+    if not (-90.0 <= latitude <= 90.0 and -180.0 <= longitude <= 180.0):
+        raise ValueError("latitude must be within -90..90 and longitude within -180..180.")
+    if not 0 < radius_km <= _NEARBY_MAX_KM:
+        raise ValueError(f"radius_km must be above 0 and at most {_NEARBY_MAX_KM:g}.")
+    dlat = radius_km / _KM_PER_DEGREE
+    dlon = radius_km / (_KM_PER_DEGREE * max(cos(radians(latitude)), 0.01))
+    box = (
+        max(longitude - dlon, -180.0), max(latitude - dlat, -90.0),
+        min(longitude + dlon, 180.0), min(latitude + dlat, 90.0),
+    )
+    chosen = {c[3] for c in map(_parse_choice, await _chosen_items(npub)) if c}
+    out = []
+    for vendor, adapter in ADAPTERS.items():
+        finder = getattr(adapter, "nearby", None)
+        if finder is None:
+            continue
+
+        async def ask(_keys_held: Any, find: Any = finder) -> Any:
+            return await find(*box)
+
+        rounded = ",".join(f"{edge:.4f}" for edge in box)
+        for station, readings in await _vendor(npub, vendor, f"nearby|{rounded}", ask):
+            choice = _choice(station)
+            if choice is None:
+                continue
+            distance = _distance_km(latitude, longitude, station.latitude, station.longitude)
+            if distance > radius_km:
+                continue
+            out.append(station.as_dict() | {
+                "distance_km": round(distance, 1),
+                "choice": choice,
+                "chosen": short_station_id(station.station_id) in chosen,
+                "readings": [r.as_dict() for r in readings],
+            })
+    out.sort(key=lambda s: s["distance_km"])
     return {"success": True, "stations": out}
 
 

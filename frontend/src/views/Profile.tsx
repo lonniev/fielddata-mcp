@@ -1,6 +1,7 @@
 /** The account page: the package's panels in their one order, with the station keys and display units. */
 
 import { AccountPage, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
+import NearbyStations from "../components/NearbyStations";
 import StationKeys from "../components/StationKeys";
 import { useUnits } from "../lib/useUnits";
 import type { UnitSystem } from "../lib/units";
@@ -58,7 +59,7 @@ export default function Profile() {
     <div className="page">
       <AccountPage
         npub={session.npub}
-        before={<StationKeys npub={session.npub} />}
+        before={<><StationKeys npub={session.npub} /><NearbyStations /></>}
         between={{ timezone: <Units /> }}
         theme={{ classNames: { chip: "chip", active: "chip chip-on" } }}
         timezone={{ classNames: { select: "field" } }}

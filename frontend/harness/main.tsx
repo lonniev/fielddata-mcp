@@ -3,10 +3,11 @@
  * arrives: real components on the vendor's sample payload, run through the
  * service's own parser (readings.json), plus a synthetic trace.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { configureTollbooth } from "@tollbooth-dpyc/web";
-import { ThemeToggle, TourProvider } from "@tollbooth-dpyc/web/react";
+import { SiteNav, ThemeToggle, TourProvider } from "@tollbooth-dpyc/web/react";
+import { NAV_CLASSES } from "../src/App";
 import Fieldscape from "../src/components/Fieldscape";
 import ProfileView from "../src/views/Profile";
 import WalletView from "../src/views/Wallet";
@@ -73,7 +74,27 @@ const ProfileReview = () => (
   </AppShell>
 );
 
-const VIEWS: Record<string, () => React.JSX.Element> = { "?og": ShareCard, "?wallet": WalletReview, "?profile": ProfileReview };
+/** The bar with its account menu open over a page, so a look at the menu needs no session. */
+function NavReview() {
+  useEffect(() => { document.querySelector<HTMLButtonElement>('button[aria-label="Account"]')?.click(); }, []);
+  return (
+    <>
+      <Fieldscape />
+      <header className="site-bar px-4 py-2">
+        <SiteNav
+          brand={<b>FieldData</b>}
+          items={[{ href: "#a", label: "Panel" }, { href: "#b", label: "Log" }]}
+          renderLink={({ href, ...p }) => <a href={href} {...p} />}
+          account={{ npub: "npub1reviewreviewreviewreviewreviewreviewreviewreviewreviewreview", links: [{ href: "#p", label: "Profile & theme" }, { href: "#q", label: "Prices" }], onSignOut: () => undefined }}
+          classNames={NAV_CLASSES}
+        />
+      </header>
+      <div className="page"><div className="card p-5">The page under the menu.</div></div>
+    </>
+  );
+}
+
+const VIEWS: Record<string, () => React.JSX.Element> = { "?og": ShareCard, "?wallet": WalletReview, "?profile": ProfileReview, "?nav": NavReview };
 if (location.hash === "#light") document.documentElement.dataset.theme = "light";
 const View = VIEWS[location.search] ?? Harness;
 createRoot(document.getElementById("root")!).render(<View />);

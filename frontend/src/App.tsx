@@ -28,6 +28,27 @@ const PAGES = [
   { href: "/terms", label: "Terms", icon: <FileText size={18} aria-hidden /> },
 ];
 
+export const NAV_CLASSES = {
+  root: "flex flex-wrap items-center gap-2",
+  nav: "relative",
+  list: "flex flex-wrap gap-1",
+  item: "chip",
+  active: "chip chip-on",
+  toggle: "chip",
+  menu: "site-menu left-0",
+  menuItem: "site-menu-item",
+  menuItemActive: "site-menu-item text-[var(--tb-accent)]",
+  end: "ml-auto flex items-center gap-3",
+  account: "relative",
+  accountButton: "rounded-full",
+  accountMenu: "site-menu right-0",
+  accountHeader: "border-b border-[var(--tb-line)] px-3 pb-2 mb-1",
+  accountHeading: "text-xs text-[var(--tb-muted)]",
+  accountNpub: "break-all font-mono text-xs",
+  accountLink: "site-menu-item",
+  signOut: "site-menu-item w-full text-left",
+};
+
 const OPEN_PAGES = [
   { to: "/panel", label: "Panel" },
   { to: "/how", label: "How it works" },
@@ -78,7 +99,7 @@ function Nav() {
           ],
           onSignOut: session.signOut,
         }}
-        classNames={{ root: "flex flex-wrap items-center gap-2", list: "flex flex-wrap gap-1", item: "chip", active: "chip chip-on", end: "ml-auto flex items-center gap-3" }}
+        classNames={NAV_CLASSES}
       />
     </header>
   );

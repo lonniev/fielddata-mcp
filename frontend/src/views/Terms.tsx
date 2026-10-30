@@ -21,6 +21,9 @@ const SECTIONS: { title: string; says: string[] }[] = [
   { title: "Your key to the account", says: [
     "Your Nostr key is your identity here, and nobody can recover it for you.",
   ] },
+  { title: "Nearby stations", says: [
+    "A nearby station's readings are what its owner publishes, and FieldData makes no claim for their accuracy.",
+  ] },
   { title: "The Catalog", says: [
     "The Catalog shows collections from the Good Brew café, and FieldData takes no orders.",
     "Orders, payment and delivery are between you and the café, under the café's own terms.",

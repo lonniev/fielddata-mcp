@@ -50,6 +50,11 @@ class VendorError(Exception):
         self.rejects_keys = rejects_keys
 
 
+def short_station_id(station_id: str) -> str:
+    """Enough of a station id to tell stations apart where space is short. Idempotent."""
+    return station_id.replace("-", "")[:15]
+
+
 @dataclass(frozen=True)
 class Station:
     """One vendor device as the patron's account reports it.

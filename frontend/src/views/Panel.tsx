@@ -24,6 +24,7 @@ export default function Panel() {
   const [ready, setReady] = useState<boolean | null>(null);
   const [stations, setStations] = useState<Station[]>([]);
   const [chosen, setChosen] = useProperty<string>("station", "");
+  const [chosenStations] = useProperty<string[]>("chosen_stations", []);
   const [readings, setReadings] = useState<Reading[]>([]);
   const [problem, setProblem] = useState("");
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -43,8 +44,9 @@ export default function Panel() {
     setProblem("");
     try {
       const status = await getPatronOnboardingStatus(session.npub);
-      setReady(status.ready);
-      if (!status.ready) return;
+      const readable = status.ready || chosenStations.length > 0;
+      setReady(readable);
+      if (!readable) return;
       const found = (await listStations()).stations;
       setStations(found);
       const first = found.find((s) => s.station_id === chosen) ?? found[0];
@@ -53,7 +55,7 @@ export default function Panel() {
       setProblem((e as Error).message);
     }
     // The stored choice seeds this one arrival; choosing a station reads it directly.
-  }, [session.npub, read]);
+  }, [session.npub, read, chosenStations.length]);
 
   useEffect(() => {
     void load();
@@ -122,7 +124,7 @@ export default function Panel() {
 
       {(ready === false || (ready && stations.length === 0 && !problem)) && (
         <PanelPreview
-          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to your Ecowitt or Ambient Weather account.</p> : null}
+          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to your account, or tick a nearby one on your Profile.</p> : null}
         />
       )}
 

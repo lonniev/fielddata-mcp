@@ -237,8 +237,36 @@ h2,
     padding: 1.25rem 1rem 34vh;
   }
   .site-bar {
+    position: relative;
+    z-index: 30;
     background: var(--tb-surface);
     border-block: 1px solid var(--tb-line);
+  }
+  /* Menus float over the page and leave the bar's height alone. */
+  .site-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    z-index: 40;
+    width: max-content;
+    min-width: 14rem;
+    max-width: min(20rem, calc(100vw - 2rem));
+    padding: 0.5rem;
+    border: 1px solid var(--tb-line);
+    border-radius: 0.75rem;
+    background: var(--tb-surface);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.3);
+  }
+  .site-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .site-menu-item:hover {
+    background: var(--tb-surface-2);
   }
   .card {
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);

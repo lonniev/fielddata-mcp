@@ -6,6 +6,7 @@ export const TOURS: Record<string, Tour> = {
   signin: signInTour(),
   account: accountTour("account", [
     { target: "keys", title: "Your station", says: "Your station keys travel by Nostr message and never touch this page." },
+    { target: "nearby", title: "Nearby stations", says: "Tick stations near you, and they join your own on the panel." },
     { target: "profile.units", title: "Units", says: "Choose metric or US figures for every instrument on this device." },
   ]),
   panel: { page: "panel", steps: [

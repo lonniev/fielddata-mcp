@@ -55,8 +55,20 @@ export interface SummaryPage {
   pageSize: number;
 }
 
+export interface NearbyStation extends Station {
+  latitude: number;
+  longitude: number;
+  distance_km: number;
+  choice: string;
+  chosen: boolean;
+  readings: Reading[];
+}
+
 export const listStations = (opts?: CallOptions) =>
-  callTool<{ stations: Station[] }>("list_stations", {}, opts);
+  callTool<{ stations: Station[]; unavailable: string[] }>("list_stations", {}, opts);
+
+export const nearbyStations = (latitude: number, longitude: number, radiusKm: number, opts?: CallOptions) =>
+  callTool<{ stations: NearbyStation[] }>("nearby_stations", { latitude, longitude, radius_km: radiusKm }, opts);
 
 export const currentReadings = (station: string, opts?: CallOptions) =>
   callTool<{ station: Station; readings: Reading[] }>("current", { station }, opts);
