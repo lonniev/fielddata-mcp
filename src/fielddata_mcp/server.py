@@ -165,6 +165,23 @@ class FieldDataRuntime(OperatorRuntime):
         )
         return {**status, "ready": False, "missing": missing, "summary": summary}
 
+    async def courier(self) -> Any:
+        """The SDK's courier, told to drop a patron's cached keys on every delivery.
+
+        The SDK takes this callback only at the courier's construction and
+        passes none, so it is set here.
+        """
+        service = await super().courier()
+        if service is not None:
+            service._on_received = _on_credentials_delivered
+        return service
+
+    async def store_patron_session(self, patron_npub: str, *args: Any, **kwargs: Any) -> bool:
+        """A field-level update or delete lands here, and the cached keys go with it."""
+        stored = await super().store_patron_session(patron_npub, *args, **kwargs)
+        _forget_cached_keys(patron_npub)
+        return stored
+
 
 # Each patron brings their own vendor keys; the operator holds no vendor account.
 # Field names carry the vendor because both vendors use the same two names, and
@@ -265,6 +282,16 @@ _keys: SessionCache[dict[str, Any]] = SessionCache(ttl_seconds=900)
 # spend neither the patron's vendor quota nor a slow round trip. Keyed by npub.
 _answers: SessionCache[Any] = SessionCache(ttl_seconds=60, max_size=4096)
 _revoked_npubs: set[str] = set()
+
+
+def _forget_cached_keys(npub: str) -> None:
+    """The next call reads the vault, so what was just stored takes effect at once."""
+    _keys.clear(npub)
+    _revoked_npubs.discard(npub)
+
+
+async def _on_credentials_delivered(npub: str, credentials: dict[str, str], service: str) -> None:
+    _forget_cached_keys(npub)
 
 
 def _on_credentials_forgotten(service: str, npub: str) -> None:

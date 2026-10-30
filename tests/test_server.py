@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
+from tollbooth.secure_courier import SecureCourierService
 
 from fielddata_mcp import ambient, ecowitt, server
 from fielddata_mcp.readings import Station
@@ -367,3 +368,66 @@ async def test_an_unread_vault_is_never_called_ready_or_absent(monkeypatch):
     status = await server.runtime.patron_onboarding_status(NPUB)
     assert status["ready"] is False
     assert {m["status"] for m in status["missing"]} == {"unknown"}
+
+
+# ---------------------------------------------------------------------------
+# Keys take effect the moment they are delivered
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def real_courier(monkeypatch):
+    """The SDK's own courier, with no relay behind it, handed out by the SDK's own accessor."""
+    courier = SecureCourierService.__new__(SecureCourierService)
+    courier._on_received = None
+    courier._credentials = {}
+    courier._sessions = {}
+    courier._credential_ttl = 1
+    courier._operator_nsec = ""
+    courier._send_card_dm = False
+
+    async def base(self):
+        return courier
+
+    monkeypatch.setattr(server.OperatorRuntime, "courier", base)
+    return courier
+
+
+async def test_a_delivery_makes_a_new_vendor_visible_at_once(monkeypatch, real_courier):
+    load_returning(monkeypatch, {"ecowitt_application_key": "EA", "ecowitt_api_key": "EB"})
+    assert set(await server._require_keys(NPUB)) == {"ecowitt"}
+
+    load_returning(monkeypatch, BOTH)
+    assert set(await server._require_keys(NPUB)) == {"ecowitt"}
+
+    courier = await server.runtime.courier()
+    await courier._finalize_receive({"success": True, "credentials": ONLY_AMBIENT}, NPUB, "fielddata", None)
+
+    assert set(await server._require_keys(NPUB)) == {"ecowitt", "ambient"}
+
+
+async def test_a_delivery_after_a_forget_is_not_called_revoked(monkeypatch, real_courier):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+    server._on_credentials_forgotten("fielddata", NPUB)
+    courier = await server.runtime.courier()
+    await courier._finalize_receive({"success": True, "credentials": ONLY_AMBIENT}, NPUB, "fielddata", None)
+    assert set(await server._require_keys(NPUB)) == {"ambient"}
+
+
+async def test_another_patrons_cached_keys_stay(monkeypatch):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+    await server._require_keys("npub1other")
+    await server._on_credentials_delivered(NPUB, {}, "fielddata")
+    assert server._keys.get("npub1other") is not None
+
+
+async def test_a_field_update_drops_the_cached_keys(monkeypatch):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+    await server._require_keys(NPUB)
+
+    async def stored(self, patron_npub, credentials, **kwargs):
+        return True
+
+    monkeypatch.setattr(server.OperatorRuntime, "store_patron_session", stored)
+    assert await server.runtime.store_patron_session(NPUB, BOTH)
+    assert server._keys.get(NPUB) is None
