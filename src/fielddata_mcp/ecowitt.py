@@ -23,14 +23,12 @@ from typing import Any
 
 import httpx
 
-from fielddata_mcp.readings import UNITS, Reading, Station, station_id_for
+from fielddata_mcp.readings import UNITS, Reading, Station, VendorError, station_id_for
 
 logger = logging.getLogger(__name__)
 
-# httpx logs every request URL at INFO, and Ecowitt's URLs carry the keys.
-logging.getLogger("httpx").setLevel(logging.WARNING)
-
 VENDOR = "ecowitt"
+LABEL = "Ecowitt"
 _BASE = "https://api.ecowitt.net/api/v3"
 _TIMEOUT = 20.0
 _PAGE_SIZE = 50
@@ -97,16 +95,15 @@ _ERROR_WORDING = {
 }
 
 
-class EcowittError(Exception):
-    """An Ecowitt failure worth naming to the caller. Never carries a key or a URL."""
+_REJECTS_KEYS = (40010, 40011, 40017, 40018)
+
+
+class EcowittError(VendorError):
+    """A ``VendorError`` that keeps Ecowitt's own code."""
 
     def __init__(self, message: str, *, code: int | None = None) -> None:
-        super().__init__(message)
+        super().__init__(message, rejects_keys=code in _REJECTS_KEYS)
         self.code = code
-
-    @property
-    def rejects_keys(self) -> bool:
-        return self.code in (40010, 40011, 40017, 40018)
 
 
 @dataclass(frozen=True)

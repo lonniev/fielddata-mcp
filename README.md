@@ -45,8 +45,8 @@ Every reading:
 | Vendor | Status | Patron keys |
 | --- | --- | --- |
 | Ecowitt (every gateway, the 4G WittField included, via Ecowitt.net v3) | v1 | `ecowitt_application_key`, `ecowitt_api_key` |
+| Ambient Weather (via ambientweather.net) | v1 | `ambient_application_key`, `ambient_api_key` |
 | Tempest | planned | personal access token |
-| Ambient Weather | planned | application key + API key |
 
 ## Design rules
 
@@ -67,7 +67,7 @@ Every reading:
   │ Pricing Studio│ prices │        FieldData — YOUR OPERATOR MCP          │
   │    (iOS)      ├───────▶│        FastMCP · deployed on Horizon          │
   └───────────────┘  Neon  │  ┌────────────────────────────────────────┐  │
-                           │  │ readings + ecowitt adapter ◀─ patron keys│ │
+                           │  │ readings + vendor adapters ◀─ patron keys│ │
    Patron (Citizen)        │  │ @runtime.paid_tool(FROZEN_UUID) tools   │  │
    + MCP client  ─────────▶│  ├────────────────────────────────────────┤  │
    (Claude, Good Earth)    │  │ tollbooth-dpyc SDK (the wheel)          │  │
@@ -80,7 +80,7 @@ Every reading:
                          (your schema)  Lightning Authority   proofs·courier
                          ledger+pricing invoices  certify +    DMs·audit
                                                   provision
-                         Ecowitt.net ◀── the patron's own keys
+                         Ecowitt.net, ambientweather.net ◀── the patron's own keys
 ```
 
 ### Onboarding roadmap
@@ -103,7 +103,7 @@ pytest
 python -m fielddata_mcp.server
 ```
 
-Tests run against the example responses in Ecowitt's API docs (`tests/fixtures/`).
+Tests run against the example responses in Ecowitt's API docs and responses built from Ambient Weather's published field list (`tests/fixtures/`).
 The live regression fixture is a GW1200 gateway with one WH51 soil probe.
 
 ## License

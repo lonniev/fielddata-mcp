@@ -3,10 +3,10 @@
 import { Link } from "react-router-dom";
 
 const STEPS: { title: string; says: string }[] = [
-  { title: "Put up your station", says: "Any Ecowitt gateway that reports to ecowitt.net will do, including the 4G WittField." },
+  { title: "Put up your station", says: "Any Ecowitt gateway that reports to ecowitt.net will do, including the 4G WittField, and so will any station that reports to ambientweather.net." },
   { title: "Sign in with Nostr", says: "Use an npub you already hold, or make a new key on the sign-in page." },
   { title: "Fund your balance", says: "Pay a Lightning invoice from your wallet, and your tool fees draw on those sats." },
-  { title: "Connect your station", says: "Make an Application Key and an API Key at ecowitt.net, then send them by the Nostr message FieldData sends you." },
+  { title: "Connect your station", says: "Make an Application Key and an API Key at ecowitt.net or ambientweather.net/account, then send them by the Nostr message FieldData sends you." },
   { title: "Read your instruments", says: "Open the panel for the latest readings, and tap any instrument for its last day." },
   { title: "Keep the log", says: "The log gives each day's temperature, frost hours, rain and degree-days." },
 ];

@@ -122,7 +122,7 @@ export default function Panel() {
 
       {(ready === false || (ready && stations.length === 0 && !problem)) && (
         <PanelPreview
-          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to ecowitt.net.</p> : null}
+          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to your Ecowitt or Ambient Weather account.</p> : null}
         />
       )}
 
