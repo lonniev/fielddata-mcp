@@ -10,6 +10,9 @@ log, an exception or a response.
 Ambient has one fixed set of imperial field names, so conversion is by field. It
 allows one request a second per API key and answers 288 rows a request, newest
 first, stored every 5 or 30 minutes.
+
+``public_stations`` reads what station owners chose to publish, from the service
+behind Ambient's own Weather Map. That service is undocumented and takes no keys.
 """
 
 from __future__ import annotations
@@ -28,6 +31,8 @@ from fielddata_mcp.readings import UNITS, Reading, Station, VendorError, station
 VENDOR = "ambient"
 LABEL = "Ambient Weather"
 _BASE = "https://rt.ambientweather.net/v1"
+_PUBLIC_DEVICES_URL = "https://lightning.ambientweather.net/devices"
+_MAX_PUBLIC_STATIONS = 100
 _TIMEOUT = 20.0
 _ROWS_PER_REQUEST = 288
 _REQUEST_GAP_SECONDS = 1.1
@@ -84,9 +89,13 @@ class AmbientKeys:
 
 async def _get(client: httpx.AsyncClient, path: str, keys: AmbientKeys, params: dict[str, Any] | None = None) -> Any:
     query = {"applicationKey": keys.application_key, "apiKey": keys.api_key, **(params or {})}
+    return await _fetch(client, f"{_BASE}{path}", query)
+
+
+async def _fetch(client: httpx.AsyncClient, url: str, query: dict[str, Any]) -> Any:
     for attempt in range(_ATTEMPTS):
         try:
-            resp = await client.get(f"{_BASE}{path}", params=query)
+            resp = await client.get(url, params=query)
         except httpx.HTTPError:
             # The exception's text would name the URL, keys and all.
             raise VendorError("Ambient Weather could not be reached. Retry shortly.") from None
@@ -196,6 +205,41 @@ async def history(
             cursor = min(stamps) - 1
     wanted = [r for r in normalize(rows, station) if r.sensor_kind in kinds and start <= r.observed_at <= end]
     return _thinned(wanted, SAMPLE_HOURS[resolution])
+
+
+async def public_stations(
+    west: float,
+    south: float,
+    east: float,
+    north: float,
+    *,
+    limit: int = _MAX_PUBLIC_STATIONS,
+) -> list[tuple[Station, list[Reading]]]:
+    """Public stations inside a lat/lon box, each with where it stands and its latest readings.
+
+    The ``Station`` carries the geolocation. Takes no keys: an owner publishes a
+    station for anyone to read.
+    """
+    if not (-180.0 <= west < east <= 180.0 and -90.0 <= south < north <= 90.0):
+        raise ValueError("The box must run west to east and south to north, within -180..180 and -90..90.")
+    if limit < 1:
+        raise ValueError("limit must be at least 1.")
+    async with _client() as client:
+        body = await _fetch(client, _PUBLIC_DEVICES_URL, {
+            "$publicBox[0][0]": west,
+            "$publicBox[0][1]": south,
+            "$publicBox[1][0]": east,
+            "$publicBox[1][1]": north,
+            "$limit": min(limit, _MAX_PUBLIC_STATIONS),
+        })
+    rows = body.get("data") if isinstance(body, dict) else None
+    if not isinstance(rows, list):
+        raise VendorError("Ambient Weather sent a response of an unexpected shape.")
+    found = []
+    for raw in rows:
+        if isinstance(raw, dict) and (station := _station(raw)):
+            found.append((station, normalize([raw.get("lastData")], station)))
+    return found
 
 
 def normalize(rows: list[Any], station: Station) -> list[Reading]:

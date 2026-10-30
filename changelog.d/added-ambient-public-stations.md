@@ -1,0 +1,1 @@
+- The Ambient Weather adapter can read public stations inside a lat/lon box, each with its location and latest readings. No tool offers this yet.
