@@ -24,6 +24,14 @@ def make_station(name: str, sid: str) -> Station:
 
 
 @pytest.fixture(autouse=True)
+def no_chosen_stations(monkeypatch):
+    async def none(npub):
+        return []
+
+    monkeypatch.setattr(server, "_chosen_items", none)
+
+
+@pytest.fixture(autouse=True)
 def fresh_caches():
     for key in list(server._answers._entries):
         server._answers.clear(key)
@@ -431,3 +439,135 @@ async def test_a_field_update_drops_the_cached_keys(monkeypatch):
     monkeypatch.setattr(server.OperatorRuntime, "store_patron_session", stored)
     assert await server.runtime.store_patron_session(NPUB, BOTH)
     assert server._keys.get(NPUB) is None
+
+
+# ---------------------------------------------------------------------------
+# Chosen stations
+# ---------------------------------------------------------------------------
+
+
+def published(sid="a9", lat=44.1, lon=-73.3, name="Neighbor"):
+    return Station(
+        station_id=sid, vendor="ambient", name=name, timezone="UTC",
+        latitude=lat, longitude=lon, model="", device_ref={"mac": "AA"},
+    )
+
+
+def choosing(monkeypatch, *items):
+    async def saved(npub):
+        return list(items)
+
+    monkeypatch.setattr(server, "_chosen_items", saved)
+
+
+def a_vendor_publishing(monkeypatch, *stations):
+    async def find(station_id, latitude, longitude):
+        for s in stations:
+            if server.short_station_id(s.station_id) == station_id:
+                return s, []
+        return None
+
+    monkeypatch.setattr(ambient, "find_nearby", find)
+
+
+CHOICE = "ambient:441000:-733000:a9"
+
+
+def test_a_choice_survives_the_property_rules_and_comes_back():
+    item = server._choice(published())
+    assert item == CHOICE
+    assert server._parse_choice(item) == ("ambient", 44.1, -73.3, "a9")
+    from tollbooth.properties import validate
+    farthest = published(sid="5bdb8963-9d54-46f8-854c-528d175f28ff", lat=-89.9999, lon=-179.9999)
+    assert validate(server.PATRON_PROPERTIES["chosen_stations"], [server._choice(farthest)])
+
+
+@pytest.mark.parametrize("bad", ["", "ambient", "ecowitt:1:2:x", "nobody:1:2:x", "ambient:x:2:y", "ambient:9990000:2:y", None, 7])
+def test_a_bad_choice_is_ignored(bad):
+    assert server._parse_choice(bad) is None
+
+
+async def test_a_patron_with_no_keys_reads_only_what_they_chose(monkeypatch):
+    load_returning(monkeypatch, None)
+    choosing(monkeypatch, CHOICE)
+    a_vendor_publishing(monkeypatch, published())
+    assert [s.station_id for s in await server._stations(NPUB)] == ["a9"]
+
+
+async def test_keys_and_choices_make_one_set_with_no_duplicate(monkeypatch):
+    load_returning(monkeypatch, ONLY_AMBIENT)
+    choosing(monkeypatch, CHOICE, "ambient:442000:-733000:b1")
+    a_vendor_publishing(monkeypatch, published(), published(sid="b1", lat=44.2))
+
+    async def own(keys):
+        return [published(name="Mine")]
+
+    monkeypatch.setattr(ambient, "list_stations", own)
+    stations, unavailable = await server._retrieval_set(NPUB)
+    assert {s.station_id: s.name for s in stations} == {"a9": "Mine", "b1": "Neighbor"}
+    assert unavailable == []
+
+
+async def test_neither_keys_nor_choices_says_what_to_do(monkeypatch):
+    load_returning(monkeypatch, None)
+    with pytest.raises(ValueError, match="No station keys"):
+        await server._stations(NPUB)
+
+
+async def test_a_chosen_station_gone_quiet_does_not_break_the_others(monkeypatch):
+    load_returning(monkeypatch, None)
+    choosing(monkeypatch, CHOICE, "ambient:442000:-733000:gone")
+    a_vendor_publishing(monkeypatch, published())
+    stations, unavailable = await server._retrieval_set(NPUB)
+    assert [s.station_id for s in stations] == ["a9"]
+    assert unavailable == ["gone"]
+
+
+async def test_reading_a_station_passes_no_keys_when_none_are_held(monkeypatch):
+    load_returning(monkeypatch, None)
+    seen = []
+
+    async def real_time(keys, station):
+        seen.append(keys)
+        return []
+
+    monkeypatch.setattr(ambient, "real_time", real_time)
+    await server._current(NPUB, published())
+    assert seen == [None]
+
+
+async def test_a_vendor_with_no_published_stations_still_needs_keys(monkeypatch):
+    load_returning(monkeypatch, None)
+
+    async def fetch(keys):
+        raise AssertionError("called with no keys")
+
+    with pytest.raises(ValueError, match="No station keys"):
+        await server._vendor(NPUB, "ecowitt", "stations", fetch)
+
+
+async def test_nearby_stations_are_nearest_first_within_the_radius_and_say_which_are_chosen(monkeypatch):
+    load_returning(monkeypatch, None)
+    choosing(monkeypatch, "ambient:441000:-733000:far")
+
+    async def nearby(west, south, east, north):
+        assert west < -73.3 < east and south < 44.0 < north
+        return [
+            (published(sid="far", lat=44.1), []),
+            (published(sid="near", lat=44.01), []),
+            (published(sid="corner", lat=44.13, lon=-73.13), []),
+            (published(sid="nowhere", lat=None, lon=None), []),
+        ]
+
+    monkeypatch.setattr(ambient, "nearby", nearby)
+    out = await inspect.unwrap(server.nearby_stations)(44.0, -73.3, 15.0, npub=NPUB)
+    assert [s["station_id"] for s in out["stations"]] == ["near", "far"]
+    assert [s["chosen"] for s in out["stations"]] == [False, True]
+    assert out["stations"][0]["choice"].startswith("ambient:440100:")
+    assert "AA" not in str(out)
+
+
+@pytest.mark.parametrize(("lat", "lon", "radius"), [(91.0, 0.0, 5.0), (0.0, 181.0, 5.0), (0.0, 0.0, 0.0), (0.0, 0.0, 500.0)])
+async def test_nearby_stations_refuse_a_place_or_radius_that_makes_no_sense(lat, lon, radius):
+    with pytest.raises(ValueError):
+        await inspect.unwrap(server.nearby_stations)(lat, lon, radius, npub=NPUB)

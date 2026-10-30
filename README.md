@@ -46,6 +46,7 @@ Every reading:
 | --- | --- | --- |
 | Ecowitt (every gateway, the 4G WittField included, via Ecowitt.net v3) | v1 | `ecowitt_application_key`, `ecowitt_api_key` |
 | Ambient Weather (via ambientweather.net) | v1 | `ambient_application_key`, `ambient_api_key` |
+| Nearby stations their owners publish (Ambient Weather today), chosen by the patron, no keys needed | v1 | none |
 | Tempest | planned | personal access token |
 
 ## Design rules

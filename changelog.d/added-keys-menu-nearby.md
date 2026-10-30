@@ -1,0 +1,3 @@
+- Your Profile connects, replaces and removes each station account's keys.
+- Your Profile lists stations published near a place, and a ticked one joins your stations like any other; `fielddata_nearby_stations` and the `chosen_stations` property do the same for agents.
+- The account menu floats over the page and leaves the bar's height alone.

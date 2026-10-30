@@ -16,6 +16,11 @@ const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
     "FieldData asks the vendor for SI units, then converts by the unit each value arrives with.",
     "Every reading is reported in UTC, and each day in the log is your station's own local day.",
   ] },
+  { title: "Nearby stations", says: [
+    "A station you tick on your Profile is read from what its owner publishes, through the service behind Ambient Weather's own map.",
+    "That service is undocumented and may change, and it gives the latest readings only, so a nearby station's history needs its owner's keys.",
+    "Its siting and calibration are its owner's.",
+  ] },
   { title: "Frost hours", says: [
     "Each sample at or below 0 °C counts for the time that sample stands for.",
     "The log reads half-hour samples, so each cold one adds half an hour.",

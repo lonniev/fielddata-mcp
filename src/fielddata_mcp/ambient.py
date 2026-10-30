@@ -11,8 +11,9 @@ Ambient has one fixed set of imperial field names, so conversion is by field. It
 allows one request a second per API key and answers 288 rows a request, newest
 first, stored every 5 or 30 minutes.
 
-``public_stations`` reads what station owners chose to publish, from the service
-behind Ambient's own Weather Map. That service is undocumented and takes no keys.
+``nearby`` reads what station owners chose to publish, from the service behind
+Ambient's own Weather Map. That service is undocumented and takes no keys, so a
+station can be read with ``keys=None``; its history cannot.
 """
 
 from __future__ import annotations
@@ -26,13 +27,15 @@ from urllib.parse import quote
 
 import httpx
 
-from fielddata_mcp.readings import UNITS, Reading, Station, VendorError, station_id_for
+from fielddata_mcp.readings import UNITS, Reading, Station, VendorError, short_station_id, station_id_for
 
 VENDOR = "ambient"
 LABEL = "Ambient Weather"
 _BASE = "https://rt.ambientweather.net/v1"
 _PUBLIC_DEVICES_URL = "https://lightning.ambientweather.net/devices"
 _MAX_PUBLIC_STATIONS = 100
+# How far around its known place to look for one station, in degrees (about 2 km).
+_FIND_MARGIN_DEGREES = 0.02
 _TIMEOUT = 20.0
 _ROWS_PER_REQUEST = 288
 _REQUEST_GAP_SECONDS = 1.1
@@ -163,8 +166,10 @@ async def list_stations(keys: AmbientKeys) -> list[Station]:
 # ---------------------------------------------------------------------------
 
 
-async def real_time(keys: AmbientKeys, station: Station) -> list[Reading]:
+async def real_time(keys: AmbientKeys | None, station: Station) -> list[Reading]:
     """The latest value of every sensor the station reports."""
+    if keys is None:
+        return await _published_readings(station)
     async with _client() as client:
         devices = await _devices(client, keys)
     wanted = station.device_ref["mac"].upper()
@@ -174,8 +179,17 @@ async def real_time(keys: AmbientKeys, station: Station) -> list[Reading]:
     raise VendorError("Ambient Weather does not know that device on this account.")
 
 
+async def _published_readings(station: Station) -> list[Reading]:
+    if station.latitude is None or station.longitude is None:
+        raise VendorError("Ambient Weather gave no location for that station.")
+    found = await find_nearby(station.station_id, station.latitude, station.longitude)
+    if found is None:
+        raise VendorError("Ambient Weather no longer publishes that station.")
+    return found[1]
+
+
 async def history(
-    keys: AmbientKeys,
+    keys: AmbientKeys | None,
     station: Station,
     start: datetime,
     end: datetime,
@@ -188,6 +202,8 @@ async def history(
     standing for the same time on a 5-minute device and a 30-minute one, which
     the frost-hour arithmetic relies on.
     """
+    if keys is None:
+        raise VendorError("Ambient Weather gives a station's history only to its owner's keys.")
     start_ms, cursor = _ms(start), _ms(end)
     path = f"/devices/{quote(station.device_ref['mac'], safe='')}"
     rows: list[Any] = []
@@ -207,7 +223,7 @@ async def history(
     return _thinned(wanted, SAMPLE_HOURS[resolution])
 
 
-async def public_stations(
+async def nearby(
     west: float,
     south: float,
     east: float,
@@ -215,7 +231,7 @@ async def public_stations(
     *,
     limit: int = _MAX_PUBLIC_STATIONS,
 ) -> list[tuple[Station, list[Reading]]]:
-    """Public stations inside a lat/lon box, each with where it stands and its latest readings.
+    """Stations published inside a lat/lon box, each with where it stands and its latest readings.
 
     The ``Station`` carries the geolocation. Takes no keys: an owner publishes a
     station for anyone to read.
@@ -240,6 +256,18 @@ async def public_stations(
         if isinstance(raw, dict) and (station := _station(raw)):
             found.append((station, normalize([raw.get("lastData")], station)))
     return found
+
+
+async def find_nearby(station_id: str, latitude: float, longitude: float) -> tuple[Station, list[Reading]] | None:
+    """One published station, found by its id (or short id) around its known place, or None."""
+    margin = _FIND_MARGIN_DEGREES
+    for station, readings in await nearby(
+        max(longitude - margin, -180.0), max(latitude - margin, -90.0),
+        min(longitude + margin, 180.0), min(latitude + margin, 90.0),
+    ):
+        if short_station_id(station.station_id) == short_station_id(station_id):
+            return station, readings
+    return None
 
 
 def normalize(rows: list[Any], station: Station) -> list[Reading]:
