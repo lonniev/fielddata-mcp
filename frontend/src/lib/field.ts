@@ -1,6 +1,7 @@
 /** FieldData's own four tools, typed. Everything else is the package's standard tools. */
 
 import { callTool, type CallOptions } from "@tollbooth-dpyc/web";
+import { answered } from "./answered";
 
 export interface Reading {
   station_id: string;
@@ -65,19 +66,19 @@ export interface NearbyStation extends Station {
 }
 
 export const listStations = (opts?: CallOptions) =>
-  callTool<{ stations: Station[]; unavailable: string[] }>("list_stations", {}, opts);
+  callTool<{ stations: Station[]; unavailable: string[] }>("list_stations", {}, opts).then(answered);
 
 export const nearbyStations = (latitude: number, longitude: number, radiusKm: number, opts?: CallOptions) =>
-  callTool<{ stations: NearbyStation[] }>("nearby_stations", { latitude, longitude, radius_km: radiusKm }, opts);
+  callTool<{ stations: NearbyStation[] }>("nearby_stations", { latitude, longitude, radius_km: radiusKm }, opts).then(answered);
 
 export const currentReadings = (station: string, opts?: CallOptions) =>
-  callTool<{ station: Station; readings: Reading[] }>("current", { station }, opts);
+  callTool<{ station: Station; readings: Reading[] }>("current", { station }, opts).then(answered);
 
 export const readingHistory = (station: string, start: string, end: string, sensorKind: string, opts?: CallOptions) =>
-  callTool<{ series: Series[] }>("history", { station, start, end, sensor_kind: sensorKind }, opts);
+  callTool<{ series: Series[] }>("history", { station, start, end, sensor_kind: sensorKind }, opts).then(answered);
 
 export const dailySummary = (station: string, startDate: string, endDate: string, baseC: number, at: SummaryPage, opts?: CallOptions) =>
   callTool<Summary>("summary", {
     station, start_date: startDate, end_date: endDate, base_c: baseC,
     sort_col: at.sortCol, sort_dir: at.sortDir, page: at.page, page_size: at.pageSize,
-  }, opts);
+  }, opts).then(answered);

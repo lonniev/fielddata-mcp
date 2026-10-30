@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { answered } from "./answered.ts";
 import { isChosen, shortStationId, toggleChoice, withoutStation } from "./chosen.ts";
 import { VENDORS, standing } from "./vendors.ts";
 
@@ -34,4 +35,11 @@ test("an account stands by whole pairs", () => {
   assert.deepEqual(standing(eco, configured), { state: "connected", deliveredAt: "2026-10-02" });
   assert.equal(standing(amb, configured).state, "partial");
   assert.equal(standing(amb, []).state, "none");
+});
+
+test("a tool's refusal becomes an error, so no page reads a list that is not there", () => {
+  assert.throws(() => answered({ success: false, error: "no longer publishes" }), /no longer publishes/);
+  assert.throws(() => answered({ success: false }), /refused/);
+  const fine = { success: true, stations: [] };
+  assert.equal(answered(fine), fine);
 });

@@ -106,10 +106,10 @@ async def test_a_console_with_no_outdoor_sensor_stands_in_and_a_null_is_skipped(
 
 
 @respx.mock
-async def test_real_time_for_a_device_no_longer_on_the_account():
-    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES[1:]))
+async def test_real_time_for_a_device_with_no_place_and_not_on_the_account():
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES[:1]))
     with pytest.raises(VendorError, match="does not know"):
-        await ambient.real_time(KEYS, station())
+        await ambient.real_time(KEYS, ambient._station(DEVICES[1]))
 
 
 def rows_back_from(end, count, minutes=5):
@@ -126,12 +126,13 @@ async def test_history_pages_back_a_second_apart_until_it_passes_the_start(no_wa
     first = rows_back_from(end, 288)
     second = rows_back_from(end - timedelta(days=1), 288)
     third = rows_back_from(end - timedelta(days=2), 288)
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES))
     route = respx.get(HISTORY_URL).mock(side_effect=[
         httpx.Response(200, json=first), httpx.Response(200, json=second), httpx.Response(200, json=third),
     ])
     readings = await ambient.history(KEYS, station(), start, end, "5min", frozenset({"air_temperature"}))
     assert route.call_count == 3
-    assert no_waiting == [ambient._REQUEST_GAP_SECONDS] * 2
+    assert no_waiting == [ambient._REQUEST_GAP_SECONDS] * 3
     params = route.calls[1].request.url.params
     assert int(params["endDate"]) == first[-1]["dateutc"] - 1
     assert params["limit"] == "288"
@@ -144,6 +145,7 @@ async def test_history_pages_back_a_second_apart_until_it_passes_the_start(no_wa
 async def test_history_thins_so_a_sample_stands_for_its_step_on_any_device():
     end = datetime(2026, 10, 30, 12, tzinfo=UTC)
     start = end - timedelta(hours=3)
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES))
     respx.get(HISTORY_URL).mock(return_value=httpx.Response(200, json=rows_back_from(end, 37)))
     five = await ambient.history(KEYS, station(), start, end, "5min", frozenset({"air_temperature"}))
     thirty = await ambient.history(KEYS, station(), start, end, "30min", frozenset({"air_temperature"}))
@@ -157,6 +159,7 @@ async def test_history_thins_so_a_sample_stands_for_its_step_on_any_device():
 async def test_history_stops_on_an_empty_page_and_when_time_does_not_advance():
     end = datetime(2026, 10, 30, tzinfo=UTC)
     start = end - timedelta(days=5)
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES))
     route = respx.get(HISTORY_URL).mock(return_value=httpx.Response(200, json=[]))
     assert await ambient.history(KEYS, station(), start, end, "5min", FULL) == []
     assert route.call_count == 1
@@ -318,3 +321,23 @@ async def test_history_with_no_keys_is_the_vendors_limit():
     end = datetime(2026, 10, 30, tzinfo=UTC)
     with pytest.raises(VendorError, match="only to its owner"):
         await ambient.history(None, ambient._station(PUBLIC_ROW), end - timedelta(days=1), end, "30min", FULL)
+
+
+NEIGHBOR = {**PUBLIC_ROW, "macAddress": "AA:AA:AA:AA:AA:AA"}
+
+
+@respx.mock
+async def test_holding_keys_does_not_hide_a_neighbors_published_station():
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES))
+    respx.get(PUBLIC_URL).mock(return_value=httpx.Response(200, json={"data": [NEIGHBOR]}))
+    readings = await ambient.real_time(KEYS, ambient._station(NEIGHBOR))
+    assert value(readings, "air_temperature") == 10.0
+
+
+@respx.mock
+async def test_history_of_a_neighbors_station_never_reads_as_rejected_keys():
+    respx.get(f"{BASE}/devices").mock(return_value=httpx.Response(200, json=DEVICES))
+    end = datetime(2026, 10, 30, tzinfo=UTC)
+    with pytest.raises(VendorError, match="only to its owner") as caught:
+        await ambient.history(KEYS, ambient._station(NEIGHBOR), end - timedelta(days=1), end, "30min", FULL)
+    assert not caught.value.rejects_keys

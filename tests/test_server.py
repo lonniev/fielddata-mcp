@@ -571,3 +571,19 @@ async def test_nearby_stations_are_nearest_first_within_the_radius_and_say_which
 async def test_nearby_stations_refuse_a_place_or_radius_that_makes_no_sense(lat, lon, radius):
     with pytest.raises(ValueError):
         await inspect.unwrap(server.nearby_stations)(lat, lon, radius, npub=NPUB)
+
+
+async def test_list_stations_survives_one_station_that_will_not_read(monkeypatch):
+    load_returning(monkeypatch, None)
+    choosing(monkeypatch, CHOICE, "ambient:442000:-733000:b1")
+    a_vendor_publishing(monkeypatch, published(), published(sid="b1", lat=44.2))
+
+    async def real_time(keys, station):
+        if station.station_id == "b1":
+            raise server.VendorError("no longer publishes")
+        return []
+
+    monkeypatch.setattr(ambient, "real_time", real_time)
+    out = await inspect.unwrap(server.list_stations)(npub=NPUB)
+    assert [s["station_id"] for s in out["stations"]] == ["a9"]
+    assert out["unavailable"] == ["b1"]
