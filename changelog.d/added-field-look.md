@@ -2,3 +2,4 @@
 - A Sources page and Terms, both in the top navigation.
 - A Catalog that reads the Good Brew café's collections live and sends orders to the café.
 - `fielddata_summary` takes `sort_col`, `sort_dir`, `page` and `page_size`, and the Log sorts and pages through it.
+- The Panel shows every instrument on a made-up farm, plainly marked as illustrative, until a station reports; a stranger can open it without signing in.

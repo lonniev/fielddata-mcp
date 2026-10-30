@@ -271,6 +271,17 @@ h2,
     break-after: avoid;
   }
 
+  .sample-mark {
+    padding: 0.125rem 0.625rem;
+    border: 1px dashed var(--tb-accent);
+    border-radius: 9999px;
+    color: var(--tb-accent);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
   .coupon-row {
     display: grid;
     gap: 0.875rem;

@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { formatDateTime, getPatronOnboardingStatus } from "@tollbooth-dpyc/web";
 import { RefreshButton, tourTarget, useAppShell, useProperty, useTimezone, useTour } from "@tollbooth-dpyc/web/react";
 import Deck from "../components/instruments/Deck";
+import PanelPreview from "../components/PanelPreview";
 import StationKeys from "../components/StationKeys";
 import Trace from "../components/Trace";
 import { currentReadings, listStations, readingHistory, type Reading, type Series, type Station } from "../lib/field";
@@ -119,13 +120,15 @@ export default function Panel() {
         </p>
       )}
 
-      {ready && stations.length === 0 && !problem && (
-        <p className="card prose-line p-5 text-sm">Your station account lists no stations yet: add one at ecowitt.net and it appears here.</p>
+      {(ready === false || (ready && stations.length === 0 && !problem)) && (
+        <PanelPreview
+          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to ecowitt.net.</p> : null}
+        />
       )}
 
       {readings.length > 0 && (
         <div {...tourTarget("panel.deck")} className="card p-4">
-          <Deck readings={readings} units={units} onOpen={open} />
+          <Deck readings={readings} units={units} onOpen={open} wide />
         </div>
       )}
 

@@ -14,13 +14,13 @@ function daysAgo(n: number): string {
   return isoDay(new Date(Date.now() - n * 24 * 60 * 60 * 1000));
 }
 
-const figure = (q: number | null, unit: string, units: UnitSystem) => {
+export const figure = (q: number | null, unit: string, units: UnitSystem) => {
   if (q == null) return "—";
   const c = convert(q, unit, units);
   return c.value.toFixed(c.places);
 };
 
-const COLUMNS: { col: keyof SummaryDay; name: string; unit: string }[] = [
+export const COLUMNS: { col: keyof SummaryDay; name: string; unit: string }[] = [
   { col: "temp_min_c", name: "Low", unit: "°C" },
   { col: "temp_max_c", name: "High", unit: "°C" },
   { col: "frost_hours", name: "Frost h", unit: "" },

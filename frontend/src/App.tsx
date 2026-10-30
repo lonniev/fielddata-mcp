@@ -3,6 +3,7 @@ import { BookOpen, FileText, Gauge, ScrollText, ShoppingBasket, Wallet as Wallet
 import { AppShell, SiteNav, TourProvider, matchesPath, useAppShell } from "@tollbooth-dpyc/web/react";
 import type { ReactNode } from "react";
 import Fieldscape from "./components/Fieldscape";
+import { PublicPanel } from "./components/PanelPreview";
 import { Sextant } from "./components/instruments/Instruments";
 import { TOURS } from "./lib/tours";
 import Catalog, { CatalogCollection } from "./views/Catalog";
@@ -28,6 +29,7 @@ const PAGES = [
 ];
 
 const OPEN_PAGES = [
+  { to: "/panel", label: "Panel" },
   { to: "/how", label: "How it works" },
   { to: "/prices", label: "Prices" },
   { to: "/catalog", label: "Catalog" },
@@ -127,7 +129,7 @@ function Site() {
             <Route path="sources" element={<Sources />} />
             <Route path="terms" element={<Terms />} />
             <Route path="signin" element={session.signedIn ? <Navigate to="/panel" replace /> : <div className="page"><div className="card mx-auto max-w-3xl p-6">{gate}</div></div>} />
-            <Route path="panel" element={<Session><Panel /></Session>} />
+            <Route path="panel" element={session.signedIn ? <Panel /> : <PublicPanel />} />
             <Route path="log" element={<Session><Log /></Session>} />
             <Route path="wallet" element={<Session><Wallet /></Session>} />
             <Route path="profile" element={<Session><Profile /></Session>} />
