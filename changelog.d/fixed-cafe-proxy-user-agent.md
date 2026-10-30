@@ -1,0 +1,1 @@
+- The Catalog reads the café on the deployed site: its proxy now names itself to the store, which refuses a request with no User-Agent.

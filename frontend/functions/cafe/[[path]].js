@@ -3,6 +3,8 @@
 // two catalog reads pass: this is no general proxy, and no cookie crosses it.
 const CAFE = "https://cafe.tollbooth-dpyc.com";
 const PAGE_SIZE = 24;
+// The store refuses a request with no User-Agent, and a Function's fetch sends none.
+const USER_AGENT = "FieldData-Catalog/1.0 (+https://fielddata.tollbooth-dpyc.com)";
 const HANDLE = /^[a-z0-9][a-z0-9-]{0,99}$/;
 
 /** The store URL a request may read, or null. */
@@ -20,7 +22,7 @@ export async function onRequestGet({ request }) {
   const upstream = upstreamFor(url.pathname, url.search);
   if (!upstream) return new Response("Not found", { status: 404 });
   const answer = await fetch(upstream, {
-    headers: { accept: "application/json" },
+    headers: { accept: "application/json", "user-agent": USER_AGENT },
     cf: { cacheTtl: 900, cacheEverything: true },
   });
   if (!answer.ok) return new Response("The café did not answer", { status: 502 });
