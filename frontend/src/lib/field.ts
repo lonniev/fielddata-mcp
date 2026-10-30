@@ -43,6 +43,16 @@ export interface SummaryDay {
 export interface Summary {
   base_c: number;
   days: SummaryDay[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface SummaryPage {
+  sortCol: string;
+  sortDir: "asc" | "desc";
+  page: number;
+  pageSize: number;
 }
 
 export const listStations = (opts?: CallOptions) =>
@@ -54,5 +64,8 @@ export const currentReadings = (station: string, opts?: CallOptions) =>
 export const readingHistory = (station: string, start: string, end: string, sensorKind: string, opts?: CallOptions) =>
   callTool<{ series: Series[] }>("history", { station, start, end, sensor_kind: sensorKind }, opts);
 
-export const dailySummary = (station: string, startDate: string, endDate: string, baseC: number, opts?: CallOptions) =>
-  callTool<Summary>("summary", { station, start_date: startDate, end_date: endDate, base_c: baseC }, opts);
+export const dailySummary = (station: string, startDate: string, endDate: string, baseC: number, at: SummaryPage, opts?: CallOptions) =>
+  callTool<Summary>("summary", {
+    station, start_date: startDate, end_date: endDate, base_c: baseC,
+    sort_col: at.sortCol, sort_dir: at.sortDir, page: at.page, page_size: at.pageSize,
+  }, opts);

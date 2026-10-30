@@ -200,3 +200,39 @@ def daily_summary(
         "days": days,
         "totals": {k: round(v, 1) for k, v in totals.items()},
     }
+
+
+# What a day's rows may be ordered by. A name outside it orders by date.
+_DAY_SORTS = frozenset(
+    {"date", "temp_min_c", "temp_max_c", "temp_mean_c", "frost_hours", "rain_mm", "degree_days"}
+)
+
+
+def page_of_days(
+    days: list[dict[str, Any]],
+    *,
+    sort_col: str,
+    sort_dir: str,
+    page: int,
+    page_size: int,
+) -> dict[str, Any]:
+    """One page of the days, ordered over all of them.
+
+    A day with no value for the column sorts last in either direction. The
+    page is clamped to the last one there is, so a shorter range can never
+    answer with an empty page.
+    """
+    col = sort_col if sort_col in _DAY_SORTS else "date"
+    known = sorted((d for d in days if d[col] is not None), key=lambda d: d[col], reverse=sort_dir == "desc")
+    ordered = known + [d for d in days if d[col] is None]
+    size = max(1, page_size)
+    last = max(0, (len(ordered) - 1) // size)
+    at = min(max(0, page), last)
+    return {
+        "days": ordered[at * size : (at + 1) * size],
+        "total": len(ordered),
+        "page": at,
+        "page_size": size,
+        "sort_col": col,
+        "sort_dir": "desc" if sort_dir == "desc" else "asc",
+    }

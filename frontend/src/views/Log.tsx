@@ -1,9 +1,8 @@
-/** The log: one line per local day, ruled like a ship's log. */
+/** The log: one line per local day, ruled like a ship's log. The service sorts and pages it. */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { pageRows } from "@tollbooth-dpyc/web";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PageControls, SortHeader, tourTarget, useProperty, useTour, type SortHeaderProps } from "@tollbooth-dpyc/web/react";
-import { dailySummary, listStations, type Station, type SummaryDay } from "../lib/field";
+import { dailySummary, listStations, type Station, type Summary, type SummaryDay } from "../lib/field";
 import { convert, type UnitSystem } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
 
@@ -37,84 +36,80 @@ export default function Log() {
   const [from, setFrom] = useState(() => daysAgo(30));
   const [to, setTo] = useState(() => daysAgo(0));
   const [baseC, setBaseC] = useState(10);
-  const [days, setDays] = useState<SummaryDay[] | null>(null);
+  const [log, setLog] = useState<Summary | null>(null);
+  const [reading, setReading] = useState(true);
   const [problem, setProblem] = useState("");
   const [sort, setSort] = useState<{ col: string; dir: "asc" | "desc" }>({ col: "date", dir: "desc" });
   const [page, setPage] = useState(0);
+  const asked = useRef(0);
 
-  const read = useCallback(async () => {
+  const read = useCallback(async (at: { col: string; dir: "asc" | "desc"; page: number }) => {
+    const ask = ++asked.current;
     setProblem("");
-    setDays(null);
+    setReading(true);
     try {
       const found = stations.length ? stations : (await listStations()).stations;
       setStations(found);
       const station = found.find((s) => s.station_id === chosen) ?? found[0];
-      if (!station) {
-        setDays([]);
-        return;
-      }
-      setDays((await dailySummary(station.station_id, from, to, baseC)).days);
-      setPage(0);
+      const answer = station
+        ? await dailySummary(station.station_id, from, to, baseC, { sortCol: at.col, sortDir: at.dir, page: at.page, pageSize: PAGE_SIZE })
+        : null;
+      if (ask !== asked.current) return;
+      setLog(answer);
+      setPage(answer?.page ?? 0);
     } catch (e) {
-      setProblem((e as Error).message);
-      setDays([]);
+      if (ask === asked.current) setProblem((e as Error).message);
+    } finally {
+      if (ask === asked.current) setReading(false);
     }
   }, [stations, chosen, from, to, baseC]);
 
   useEffect(() => {
-    void read();
-    // One reading on arrival; afterwards "Read the log" asks.
+    void read({ ...sort, page: 0 });
+    // One reading on arrival; afterwards a sort, a page or "Read the log" asks.
     // eslint-disable-next-line
   }, []);
-
-  const sorted = useMemo(() => {
-    const value = (d: SummaryDay) => d[sort.col as keyof SummaryDay];
-    const rows = [...(days ?? [])].sort((a, b) => {
-      const [x, y] = [value(a), value(b)];
-      if (x == null) return 1;
-      if (y == null) return -1;
-      return x < y ? -1 : x > y ? 1 : 0;
-    });
-    return sort.dir === "desc" ? rows.reverse() : rows;
-  }, [days, sort]);
 
   const headerProps: Pick<SortHeaderProps, "activeCol" | "dir" | "onSort"> = {
     activeCol: sort.col,
     dir: sort.dir,
-    onSort: (col, dir) => setSort({ col, dir }),
+    onSort: (col, dir) => {
+      setSort({ col, dir });
+      void read({ col, dir, page: 0 });
+    },
   };
   const unitOf = (unit: string) => (unit ? ` (${convert(0, unit, units).unit})` : "");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
-      <h1 className="text-xl">Log</h1>
-      <div {...tourTarget("log.range")} className="flex flex-wrap items-end gap-3 text-sm">
+    <div className="page space-y-4">
+      <div {...tourTarget("log.range")} className="card flex flex-wrap items-end gap-3 p-4 text-sm">
+        <h1 className="mr-auto self-center text-3xl">Log</h1>
         <label className="grid gap-1">From<input type="date" className="field" value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></label>
         <label className="grid gap-1">To<input type="date" className="field" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
         <label className="grid gap-1">Base °C<input type="number" className="field w-20" min={-10} max={40} value={baseC} onChange={(e) => setBaseC(Number(e.target.value))} /></label>
-        <button type="button" className="chip chip-accent" onClick={() => void read()} disabled={days === null}>Read the log</button>
+        <button type="button" className="chip chip-accent" onClick={() => void read({ ...sort, page: 0 })} disabled={reading}>Read the log</button>
       </div>
 
       {problem && <p className="rounded-lg border border-[var(--tb-err-line)] bg-[var(--tb-err-bg)] p-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
-      {days === null && <p className="prose-line text-sm" aria-busy="true">Reading the log…</p>}
+      {reading && !log && <p className="card prose-line p-5 text-sm" aria-busy="true">Reading the log…</p>}
 
-      {sorted.length > 0 && (
-        <div {...tourTarget("log.table")} className="card overflow-x-auto">
-          <table className="w-full text-right font-mono text-sm">
-            <thead className="text-xs text-[var(--tb-muted)]">
+      {log && log.total > 0 && (
+        <div {...tourTarget("log.table")} className="card overflow-x-auto" aria-busy={reading}>
+          <table className="w-full text-right font-mono">
+            <thead className="bg-[var(--tb-surface-2)] text-xs text-[var(--tb-muted)]">
               <tr>
-                <SortHeader label="Date" col="date" {...headerProps} classNames={{ cell: "p-2 text-left font-normal" }} />
+                <SortHeader label="Date" col="date" {...headerProps} classNames={{ cell: "px-4 py-3 text-left font-normal", active: "text-[var(--tb-accent)]" }} />
                 {COLUMNS.map((c) => (
-                  <SortHeader key={c.col} label={`${c.name}${unitOf(c.unit)}`} col={c.col} {...headerProps} classNames={{ cell: "p-2 font-normal" }} />
+                  <SortHeader key={c.col} label={`${c.name}${unitOf(c.unit)}`} col={c.col} {...headerProps} classNames={{ cell: "px-4 py-3 font-normal", active: "text-[var(--tb-accent)]" }} />
                 ))}
               </tr>
             </thead>
             <tbody>
-              {pageRows(sorted, page, PAGE_SIZE).map((d) => (
+              {log.days.map((d) => (
                 <tr key={d.date} className="border-t border-[var(--tb-line)]">
-                  <td className="p-2 text-left">{d.date}</td>
+                  <td className="px-4 py-2.5 text-left">{d.date}</td>
                   {COLUMNS.map((c) => (
-                    <td key={c.col} className="p-2">{figure(d[c.col] as number | null, c.unit, units)}</td>
+                    <td key={c.col} className="px-4 py-2.5">{figure(d[c.col] as number | null, c.unit, units)}</td>
                   ))}
                 </tr>
               ))}
@@ -122,7 +117,16 @@ export default function Log() {
           </table>
         </div>
       )}
-      <PageControls page={page} pageSize={PAGE_SIZE} total={sorted.length} onPage={setPage} hideSinglePage classNames={{ root: "flex flex-wrap items-center gap-2 text-sm", chip: "chip" }} />
+      {log && (
+        <PageControls
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={log.total}
+          onPage={(p) => void read({ ...sort, page: p })}
+          hideSinglePage
+          classNames={{ root: "card flex flex-wrap items-center justify-center gap-2 p-3 text-sm", chip: "chip", label: "px-2" }}
+        />
+      )}
     </div>
   );
 }

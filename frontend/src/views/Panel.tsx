@@ -74,11 +74,11 @@ export default function Panel() {
   const newest = readings.reduce((latest, r) => (r.observed_at > latest ? r.observed_at : latest), "");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <div className="page space-y-4">
       {ready === false && <StationKeys npub={session.npub} onConnected={load} />}
 
       {ready && (
-        <header className="flex flex-wrap items-center gap-3">
+        <header className="card flex flex-wrap items-center gap-3 p-4">
           {stations.length > 1 ? (
             <select
               {...tourTarget("panel.station")}
@@ -120,11 +120,11 @@ export default function Panel() {
       )}
 
       {ready && stations.length === 0 && !problem && (
-        <p className="prose-line text-sm">Your station account lists no stations yet: add one at ecowitt.net and it appears here.</p>
+        <p className="card prose-line p-5 text-sm">Your station account lists no stations yet: add one at ecowitt.net and it appears here.</p>
       )}
 
       {readings.length > 0 && (
-        <div {...tourTarget("panel.deck")}>
+        <div {...tourTarget("panel.deck")} className="card p-4">
           <Deck readings={readings} units={units} onOpen={open} />
         </div>
       )}

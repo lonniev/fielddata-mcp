@@ -29,6 +29,30 @@
   --mercury: #a8321f;
   --water: #2f6c8f;
   --trace: #2f6c8f;
+  --sky-high: #bfe0ee;
+  --sky-low: #f6efd9;
+  --paper: #fbf3dc;
+  --paper-ink: #3f3417;
+  --paper-rule: #b39a5a;
+  --scene-orb: #f5c94d;
+  --scene-hill-far: #b7cfa0;
+  --scene-hill-mid: #94b97c;
+  --scene-ground: #7b9b56;
+  --scene-furrow: #5d4a2c;
+  --scene-sprout: #4f9a3d;
+  --scene-leaf: #3f7d3a;
+  --scene-leaf-2: #55943f;
+  --scene-grape: #5a3a78;
+  --scene-fruit: #d2452c;
+  --scene-post: #6d553a;
+  --scene-wood: #9a7446;
+  --scene-steel: #4b5560;
+  --scene-white: #f4f4ee;
+  --scene-accent: #d98b1f;
+  --scene-panel: #23425f;
+  --scene-tread: #2c3136;
+  --scene-signal: #1d9c6e;
+  --scene-glass: #dcefeacc;
 }
 
 /* The binnacle by night: engraved faces, brass and a red lamp. */
@@ -61,6 +85,30 @@
     --mercury: #e4573d;
     --water: #5fa8cc;
     --trace: #e4573d;
+    --sky-high: #101b2d;
+    --sky-low: #3b3a4a;
+    --paper: #ecdfba;
+    --paper-ink: #33290f;
+    --paper-rule: #93793a;
+    --scene-orb: #e7e2c8;
+    --scene-hill-far: #24384a;
+    --scene-hill-mid: #22402f;
+    --scene-ground: #233524;
+    --scene-furrow: #18210f;
+    --scene-sprout: #4d8e43;
+    --scene-leaf: #2c6136;
+    --scene-leaf-2: #39773f;
+    --scene-grape: #8a68b5;
+    --scene-fruit: #d9583c;
+    --scene-post: #6d6050;
+    --scene-wood: #5c4a33;
+    --scene-steel: #8d97a1;
+    --scene-white: #cfd3cd;
+    --scene-accent: #c9a15a;
+    --scene-panel: #2d5e8c;
+    --scene-tread: #14181b;
+    --scene-signal: #5de0a8;
+    --scene-glass: #5b7d8455;
   }
 }
 :root[data-theme="dark"] {
@@ -91,11 +139,38 @@
   --mercury: #e4573d;
   --water: #5fa8cc;
   --trace: #e4573d;
+  --sky-high: #101b2d;
+  --sky-low: #3b3a4a;
+  --paper: #ecdfba;
+  --paper-ink: #33290f;
+  --paper-rule: #93793a;
+  --scene-orb: #e7e2c8;
+  --scene-hill-far: #24384a;
+  --scene-hill-mid: #22402f;
+  --scene-ground: #233524;
+  --scene-furrow: #18210f;
+  --scene-sprout: #4d8e43;
+  --scene-leaf: #2c6136;
+  --scene-leaf-2: #39773f;
+  --scene-grape: #8a68b5;
+  --scene-fruit: #d9583c;
+  --scene-post: #6d6050;
+  --scene-wood: #5c4a33;
+  --scene-steel: #8d97a1;
+  --scene-white: #cfd3cd;
+  --scene-accent: #c9a15a;
+  --scene-panel: #2d5e8c;
+  --scene-tread: #14181b;
+  --scene-signal: #5de0a8;
+  --scene-glass: #5b7d8455;
 }
 
-html,
+html {
+  min-height: 100%;
+  background: linear-gradient(var(--sky-high), var(--sky-low)) fixed var(--page);
+}
 body {
-  background: var(--page);
+  background: transparent;
   color: var(--tb-ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
@@ -155,6 +230,130 @@ h2,
     color: var(--tb-muted);
     line-height: 1.6;
   }
+  /* Every page: wide, and ending in open ground so the fieldscape shows. */
+  .page {
+    max-width: 80rem;
+    margin-inline: auto;
+    padding: 1.25rem 1rem 34vh;
+  }
+  .site-bar {
+    background: var(--tb-surface);
+    border-block: 1px solid var(--tb-line);
+  }
+  .card {
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  }
+
+  /* The whole picture on a wide screen; the middle of it on a phone. */
+  .scene-art {
+    height: clamp(230px, min(48vh, 27.5vw), 560px);
+  }
+
+  .wallet,
+  .account {
+    display: grid;
+    gap: 1rem;
+    align-items: start;
+  }
+  @media (min-width: 64rem) {
+    .account {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .build-card {
+    columns: 18rem 3;
+    column-gap: 2rem;
+  }
+  .build-section {
+    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    break-after: avoid;
+  }
+
+  .coupon-row {
+    display: grid;
+    gap: 0.875rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  }
+  .coupon {
+    --notch: radial-gradient(circle 0.55rem at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 0.55rem at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
+    display: flex;
+    align-items: stretch;
+    min-height: 7rem;
+    color: var(--paper-ink);
+    text-align: left;
+    background: var(--paper);
+    -webkit-mask: var(--notch);
+    mask: var(--notch);
+    transition: transform 120ms ease;
+  }
+  .coupon:hover:not(:disabled) {
+    transform: rotate(-0.6deg) translateY(-1px);
+  }
+  .coupon[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--paper) 72%, #6fa04a);
+  }
+  .coupon:disabled {
+    opacity: 0.6;
+  }
+  .coupon-stub {
+    display: grid;
+    place-items: center;
+    width: 4.25rem;
+    color: var(--paper);
+    background: #4f7a35;
+    border-right: 2px dashed var(--paper);
+  }
+  .coupon-body {
+    display: grid;
+    align-content: center;
+    gap: 0.05rem;
+    flex: 1;
+    margin: 0.4rem 0.7rem 0.4rem 0.4rem;
+    padding: 0.25rem 0.7rem;
+    border: 1px dashed var(--paper-rule);
+    border-radius: 0.375rem;
+  }
+  .coupon-name {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+  }
+  .coupon-sats {
+    font-family: var(--font-mono);
+    font-size: 1.625rem;
+    line-height: 1.15;
+  }
+  .coupon-small {
+    font-size: 0.75rem;
+    opacity: 0.75;
+  }
+
+  .tile {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 120ms ease;
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+  }
+  .tile-image {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    color: var(--tb-muted);
+    background: var(--tb-surface-2);
+  }
+  .tile-says {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
 }
 
 .tb-ps {
@@ -174,4 +373,22 @@ h2,
   .fluid {
     transition: y 900ms ease-out, height 900ms ease-out;
   }
+  .scene-pulse {
+    animation: scene-pulse 2.8s ease-in-out infinite;
+  }
+  .scene-rover {
+    animation: scene-rover 48s ease-in-out infinite alternate;
+  }
+  .scene-drone {
+    animation: scene-drone 7s ease-in-out infinite alternate;
+  }
+}
+@keyframes scene-pulse {
+  50% { opacity: 0.25; }
+}
+@keyframes scene-rover {
+  to { transform: translateX(150px); }
+}
+@keyframes scene-drone {
+  to { transform: translate(-46px, 16px); }
 }

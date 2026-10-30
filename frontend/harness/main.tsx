@@ -6,7 +6,11 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { configureTollbooth } from "@tollbooth-dpyc/web";
-import { ThemeToggle } from "@tollbooth-dpyc/web/react";
+import { ThemeToggle, TourProvider } from "@tollbooth-dpyc/web/react";
+import Fieldscape from "../src/components/Fieldscape";
+import ProfileView from "../src/views/Profile";
+import WalletView from "../src/views/Wallet";
+import { AppShell } from "@tollbooth-dpyc/web/react";
 import Deck from "../src/components/instruments/Deck";
 import Trace from "../src/components/Trace";
 import { Gauge, Sextant } from "../src/components/instruments/Instruments";
@@ -59,4 +63,17 @@ function ShareCard() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(location.search === "?og" ? <ShareCard /> : <Harness />);
+/** The wallet with no session: the coupons draw, and the balance says it could not be read. */
+const WalletReview = () => <TourProvider tours={{}}><Fieldscape /><WalletView /></TourProvider>;
+
+/** The account page laid out with no real session behind it. */
+const ProfileReview = () => (
+  <AppShell theme="dark" signedOut={() => <TourProvider tours={{}}><Fieldscape /><ProfileView /></TourProvider>}>
+    {() => null}
+  </AppShell>
+);
+
+const VIEWS: Record<string, () => React.JSX.Element> = { "?og": ShareCard, "?wallet": WalletReview, "?profile": ProfileReview };
+if (location.hash === "#light") document.documentElement.dataset.theme = "light";
+const View = VIEWS[location.search] ?? Harness;
+createRoot(document.getElementById("root")!).render(<View />);
