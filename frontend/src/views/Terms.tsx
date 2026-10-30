@@ -1,53 +1,43 @@
-/** Terms of use. A draft for the owner's review: nothing here has had legal review. */
+/** What the words mean, grouped, with a search. */
 
-const SECTIONS: { title: string; says: string[] }[] = [
-  { title: "The service", says: [
-    "FieldData returns readings from weather stations and soil probes on your own vendor account.",
-    "It is provided as is, and readings may be late, missing or wrong: check them before you rely on them for a decision about your crop, your property or your safety.",
-  ] },
-  { title: "Your keys", says: [
-    "You deliver your vendor keys by Nostr message, and the operator stores them encrypted under your npub.",
-    "You may delete them at any time, and you remain responsible for your vendor account and its terms.",
-  ] },
-  { title: "Your data", says: [
-    "FieldData passes readings through to you and holds them in a one-minute cache.",
-    "Tool calls and balances are recorded so your account can be kept and audited.",
-  ] },
-  { title: "Fees", says: [
-    "Tool fees are set by the operator's live pricing model and shown on the Prices page.",
-    "You pay them from a balance funded in Bitcoin Lightning, and a tool call that fails at the vendor is refunded.",
-    "Lightning payments are final, and credit may expire as the pricing model states.",
-  ] },
-  { title: "Your key to the account", says: [
-    "Your Nostr key is your identity here, and nobody can recover it for you.",
-  ] },
-  { title: "Nearby stations", says: [
-    "A nearby station's readings are what its owner publishes, and FieldData makes no claim for their accuracy.",
-  ] },
-  { title: "The Catalog", says: [
-    "The Catalog shows collections from the Good Brew café, and FieldData takes no orders.",
-    "Orders, payment and delivery are between you and the café, under the café's own terms.",
-  ] },
-  { title: "Marks", says: [
-    "DPYC™, Tollbooth DPYC™ and Don't Pester Your Customer™ are marks of Lonnie VanZandt.",
-    "Ecowitt and Ambient Weather are trademarks of their owners, and no affiliation or endorsement is implied.",
-  ] },
-];
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { GROUPS, searchGlossary } from "../lib/glossary";
+import { useUnits } from "../lib/useUnits";
 
 export default function Terms() {
+  const [units] = useUnits();
+  const [query, setQuery] = useState("");
+  const hits = searchGlossary(query, units);
   return (
     <div className="page space-y-4">
-      <header className="card p-5"><h1 className="text-3xl">Terms of use</h1></header>
-      <div className="columns-1 gap-4 md:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
-        {SECTIONS.map((s) => (
-          <section key={s.title} className="card p-5">
-            <h2 className="text-lg">{s.title}</h2>
-            {s.says.map((line) => (
-              <p key={line} className="prose-line mt-1 text-sm">{line}</p>
-            ))}
+      <header className="card flex flex-wrap items-center gap-3 p-5">
+        <div className="min-w-0 flex-1 basis-72">
+          <h1 className="text-3xl">Terms</h1>
+          <p className="prose-line mt-1 text-sm">What the words on this site mean.</p>
+        </div>
+        <input className="field w-full sm:w-72" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search the words" aria-label="Search the terms" />
+      </header>
+      {hits.length === 0 && <p className="card prose-line p-5 text-sm">No term matches that.</p>}
+      {GROUPS.map((group) => {
+        const entries = hits.filter((e) => e.group === group.id);
+        if (!entries.length) return null;
+        return (
+          <section key={group.id} className="space-y-3">
+            <h2 className="card px-5 py-3 text-lg">{group.title}</h2>
+            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {entries.map((e) => (
+                <article key={e.key} className="card p-5">
+                  <h3 className="font-display text-lg">{e.term}</h3>
+                  {e.aka && <p className="text-xs text-[var(--tb-muted)]">{e.aka.join(" · ")}</p>}
+                  <p className="prose-line mt-1 text-sm">{e.said(units)}</p>
+                </article>
+              ))}
+            </div>
           </section>
-        ))}
-      </div>
+        );
+      })}
+      <p className="card p-4 text-center text-sm"><Link to="/terms-of-use" className="underline">Terms of use</Link></p>
     </div>
   );
 }

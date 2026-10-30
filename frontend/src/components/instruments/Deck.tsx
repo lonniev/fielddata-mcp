@@ -26,7 +26,7 @@ export default function Deck({
   wide?: boolean;
 }) {
   return (
-    <div className={`grid grid-cols-2 gap-3 sm:grid-cols-3 ${wide ? "md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-7" : "lg:grid-cols-4"}`}>
+    <div className={wide ? "deck deck-wide" : "deck"}>
       {sortForPanel(readings).map((r) => {
         const label = instrumentLabel(r.sensor_kind, r.channel, r.channel_name);
         const gauge = <Gauge kind={r.sensor_kind} quantity={r.quantity} unit={r.unit} units={units} label={label} />;

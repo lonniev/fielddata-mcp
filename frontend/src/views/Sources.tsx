@@ -1,8 +1,10 @@
 /** Where every figure comes from and what was done to it, so a grower can check any of it. */
 
 import { CAFE_URL } from "../lib/cafe";
+import { formatWhole, type UnitSystem } from "../lib/units";
+import { useUnits } from "../lib/useUnits";
 
-const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
+const cards = (units: UnitSystem): { title: string; says: string[]; link?: [string, string] }[] => [
   { title: "Your Ecowitt station", says: [
     "An Ecowitt station's readings come from your own account on Ecowitt.net, through its version 3 API.",
     "All Ecowitt gateways upload there, the 4G WittField included.",
@@ -13,7 +15,7 @@ const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
     "The log counts a day's rain from the station's daily total, and its extra temperature sensors are not read.",
   ], link: ["Ambient Weather API reference", "https://github.com/ambient-weather/api-docs"] },
   { title: "Units and clocks", says: [
-    "FieldData asks the vendor for SI units, then converts by the unit each value arrives with.",
+    "FieldData asks the vendor for metric units and converts by the unit each value arrives with, and this site then shows the units you chose on your Profile.",
     "Every reading is reported in UTC, and each day in the log is your station's own local day.",
   ] },
   { title: "Nearby stations", says: [
@@ -22,7 +24,7 @@ const CARDS: { title: string; says: string[]; link?: [string, string] }[] = [
     "Its siting and calibration are its owner's.",
   ] },
   { title: "Frost hours", says: [
-    "Each sample at or below 0 °C counts for the time that sample stands for.",
+    `Each sample at or below ${formatWhole(0, "°C", units)} counts for the time that sample stands for.`,
     "The log reads half-hour samples, so each cold one adds half an hour.",
   ] },
   { title: "Degree-days", says: [
@@ -67,6 +69,7 @@ const REACH: [string, string, string][] = [
 ];
 
 export default function Sources() {
+  const [units] = useUnits();
   return (
     <div className="page space-y-4">
       <header className="card p-5">
@@ -74,7 +77,7 @@ export default function Sources() {
         <p className="prose-line mt-1 text-sm">Every figure on this site comes from a place you can check, by arithmetic you can repeat.</p>
       </header>
       <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
-        {CARDS.map((c) => (
+        {cards(units).map((c) => (
           <section key={c.title} className="card p-5">
             <h2 className="text-lg">{c.title}</h2>
             {c.says.map((line) => <p key={line} className="prose-line mt-1 text-sm">{line}</p>)}

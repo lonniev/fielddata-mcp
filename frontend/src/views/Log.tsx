@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PageControls, SortHeader, tourTarget, useProperty, useTour, type SortHeaderProps } from "@tollbooth-dpyc/web/react";
 import { dailySummary, listStations, type Station, type Summary, type SummaryDay } from "../lib/field";
-import { convert, type UnitSystem } from "../lib/units";
+import { celsiusToInput, convert, inputToCelsius, type UnitSystem } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
+import Term from "../components/Term";
 
 const PAGE_SIZE = 14;
 
@@ -86,9 +87,13 @@ export default function Log() {
         <h1 className="mr-auto self-center text-3xl">Log</h1>
         <label className="grid gap-1">From<input type="date" className="field" value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></label>
         <label className="grid gap-1">To<input type="date" className="field" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
-        <label className="grid gap-1">Base °C<input type="number" className="field w-20" min={-10} max={40} value={baseC} onChange={(e) => setBaseC(Number(e.target.value))} /></label>
+        <label className="grid gap-1">Base {convert(0, "°C", units).unit}<input type="number" className="field w-20" min={Math.round(celsiusToInput(-10, units))} max={Math.round(celsiusToInput(40, units))} value={Math.round(celsiusToInput(baseC, units) * 10) / 10} onChange={(e) => setBaseC(inputToCelsius(Number(e.target.value), units))} /></label>
         <button type="button" className="chip chip-accent" onClick={() => void read({ ...sort, page: 0 })} disabled={reading}>Read the log</button>
       </div>
+
+      <p className="card flex flex-wrap gap-x-5 gap-y-1 p-3 text-sm">
+        <Term of="base_temp" /><Term of="frost_hours" /><Term of="gdd" />
+      </p>
 
       {problem && <p className="rounded-lg border border-[var(--tb-err-line)] bg-[var(--tb-err-bg)] p-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
       {reading && !log && <p className="card prose-line p-5 text-sm" aria-busy="true">Reading the log…</p>}

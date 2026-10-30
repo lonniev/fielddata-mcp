@@ -90,3 +90,5 @@ export function instrumentLabel(kind: string, channel: number | null, channelNam
   if (channelName) return `${name}: ${channelName}`;
   return channel == null ? name : `${name} ${channel}`;
 }
+
+export const INSTRUMENT_KINDS = PANEL_ORDER;

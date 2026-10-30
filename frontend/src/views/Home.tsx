@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAppShell } from "@tollbooth-dpyc/web/react";
 import Deck from "../components/instruments/Deck";
 import type { Reading } from "../lib/field";
+import { useUnits } from "../lib/useUnits";
 import { CafeShelf } from "./Catalog";
 
 // Illustrative figures for the page itself: no station stands behind them.
@@ -34,6 +35,7 @@ const WHY: { title: string; says: string }[] = [
 
 export default function Home() {
   const { session } = useAppShell();
+  const [units] = useUnits();
   return (
     <div className="page space-y-4">
       <section className="card grid items-center gap-6 p-6 lg:grid-cols-[1fr_1.15fr] lg:p-8">
@@ -51,7 +53,7 @@ export default function Home() {
           </div>
         </div>
         <figure>
-          <Deck readings={SAMPLE} units="si" />
+          <Deck readings={SAMPLE} units={units} />
           <figcaption className="mt-2 text-center text-xs text-[var(--tb-muted)]">Illustrative readings.</figcaption>
         </figure>
       </section>
@@ -81,7 +83,7 @@ export default function Home() {
         </div>
       </section>
 
-      <CafeShelf count={3} />
+      <CafeShelf count={4} />
     </div>
   );
 }

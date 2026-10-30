@@ -31,6 +31,30 @@ export function formatQuantity(quantity: number, unit: string, system: UnitSyste
   return `${c.value.toFixed(c.places)}${shown}`;
 }
 
+/** A whole figure for use in a sentence: "50 °F", "10 °C". */
+export function formatWhole(quantity: number, unit: string, system: UnitSystem): string {
+  const c = convert(quantity, unit, system);
+  return `${Math.round(c.value)} ${c.unit}`;
+}
+
+const KM_PER_MILE = 1.609344;
+
+export function formatDistance(km: number, system: UnitSystem): string {
+  return system === "us" ? `${(km / KM_PER_MILE).toFixed(1)} mi` : `${km.toFixed(1)} km`;
+}
+
+export const kmFromInput = (distance: number, system: UnitSystem) => (system === "us" ? distance * KM_PER_MILE : distance);
+
+/** How far a search may reach, in round figures of the patron's own unit. */
+export function radiusChoices(system: UnitSystem): { label: string; km: number }[] {
+  const steps = system === "us" ? [3, 10, 20, 30, 60] : [5, 15, 30, 50, 100];
+  const name = system === "us" ? "mi" : "km";
+  return steps.map((n) => ({ label: `${n} ${name}`, km: kmFromInput(n, system) }));
+}
+
+export const celsiusToInput = (celsius: number, system: UnitSystem) => (system === "us" ? (celsius * 9) / 5 + 32 : celsius);
+export const inputToCelsius = (shown: number, system: UnitSystem) => (system === "us" ? ((shown - 32) * 5) / 9 : shown);
+
 /** A scale label: whole numbers unless the unit needs its decimals. */
 export function formatTick(quantity: number, unit: string, system: UnitSystem): string {
   const c = convert(quantity, unit, system);

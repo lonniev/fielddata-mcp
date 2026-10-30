@@ -31,11 +31,11 @@ export function CafeShelf({ count }: { count: number }) {
       <div className="card flex flex-wrap items-center gap-3 p-5">
         <div>
           <h2 className="text-xl">From the Good Brew café</h2>
-          <p className="prose-line text-sm">Coffee named for sound money, and the goods that go with a working farm.</p>
+          <p className="prose-line text-sm">The instruments for knowing your own terroir, with books and merchandise to go with them.</p>
         </div>
         <Link to="/catalog" className="chip ml-auto">The whole catalog</Link>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {found.slice(0, count).map((c) => <CollectionTile key={c.handle} c={c} />)}
       </div>
     </section>
@@ -56,7 +56,7 @@ export default function Catalog() {
       {failed && <Trouble text="The café's shelves could not be read just now." />}
       {!found && !failed && <p className="card p-5 text-sm" aria-busy="true">Reading the café's shelves…</p>}
       {found && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {found.map((c) => <CollectionTile key={c.handle} c={c} />)}
         </div>
       )}
