@@ -594,7 +594,11 @@ async def list_stations(npub: PatronNpub = "") -> dict[str, Any]:
     stations, unavailable = await _retrieval_set(npub)
     out = []
     for station in stations:
-        readings = await _current(npub, station)
+        try:
+            readings = await _current(npub, station)
+        except ValueError:
+            unavailable.append(short_station_id(station.station_id))
+            continue
         sensors = sorted(
             {(r.sensor_kind, r.channel, r.channel_name) for r in readings},
             key=lambda s: (s[0], s[1] or 0),

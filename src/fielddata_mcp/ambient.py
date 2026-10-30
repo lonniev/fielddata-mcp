@@ -176,7 +176,10 @@ async def real_time(keys: AmbientKeys | None, station: Station) -> list[Reading]
     for device in devices:
         if str(device.get("macAddress") or "").upper() == wanted:
             return normalize([device.get("lastData")], station)
-    raise VendorError("Ambient Weather does not know that device on this account.")
+    if station.latitude is None or station.longitude is None:
+        raise VendorError("Ambient Weather does not know that device on this account.")
+    # Holding keys says nothing about this station: it may be another owner's.
+    return await _published_readings(station)
 
 
 async def _published_readings(station: Station) -> list[Reading]:
@@ -202,12 +205,19 @@ async def history(
     standing for the same time on a 5-minute device and a 30-minute one, which
     the frost-hour arithmetic relies on.
     """
+    refusal = VendorError("Ambient Weather gives a station's history only to its owner's keys.")
     if keys is None:
-        raise VendorError("Ambient Weather gives a station's history only to its owner's keys.")
+        raise refusal
     start_ms, cursor = _ms(start), _ms(end)
     path = f"/devices/{quote(station.device_ref['mac'], safe='')}"
     rows: list[Any] = []
     async with _client() as client:
+        # Asked first, because the vendor's refusal of another owner's device
+        # would read as these keys being rejected.
+        owned = {str(d.get("macAddress") or "").upper() for d in await _devices(client, keys)}
+        if station.device_ref["mac"].upper() not in owned:
+            raise refusal
+        await asyncio.sleep(_REQUEST_GAP_SECONDS)
         for page in range(_MAX_PAGES):
             if page:
                 await asyncio.sleep(_REQUEST_GAP_SECONDS)
