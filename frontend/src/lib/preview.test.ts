@@ -22,3 +22,9 @@ test("the week runs newest first and ends today", () => {
   assert.equal(days[0].date, "2026-10-30");
   assert.equal(days.at(-1)?.date, "2026-10-24");
 });
+
+test("a barometer's day stays in a barometer's range", () => {
+  const pressure = previewReadings(NOW).find((r) => r.sensor_kind === "pressure")!;
+  const values = previewSeries(pressure, NOW).points.map(([, q]) => q);
+  assert.ok(Math.max(...values) - Math.min(...values) < 12);
+});

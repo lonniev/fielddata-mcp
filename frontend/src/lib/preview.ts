@@ -33,9 +33,12 @@ export function previewReadings(now: number): Reading[] {
   }));
 }
 
+/** How far each instrument plausibly moves in a day, in its own unit. */
+const DAILY_SWING: Record<string, number> = { pressure: 4, air_temperature: 6, soil_temperature: 1.5, relative_humidity: 15, soil_moisture: 2, wind_direction: 40 };
+
 /** A day's trace ending on the reading: a daily swing with a little ripple. */
 export function previewSeries(reading: Reading, now: number): Series {
-  const swing = Math.max(Math.abs(reading.quantity) * 0.18, 0.5);
+  const swing = DAILY_SWING[reading.sensor_kind] ?? Math.max(reading.quantity * 0.6, 0.5);
   const points = Array.from({ length: 97 }, (_, i): [string, number] => {
     const back = (96 - i) / 96;
     const wave = Math.sin(back * 2 * Math.PI) + 0.12 * Math.sin(back * 37);
