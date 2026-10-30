@@ -1,0 +1,1 @@
+- Keys take effect as soon as they are delivered, updated or deleted, in place of up to 15 minutes later.
