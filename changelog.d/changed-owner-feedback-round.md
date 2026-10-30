@@ -1,0 +1,6 @@
+- Profile opens with your balance, top-up and wallet on the left and your Nostr profile on the right.
+- Terms now explains the words the site uses, with a search, and terms of use moved to their own page.
+- The Catalog offers Terroir, MCPs, DPYC merchandise and Books.
+- The Terroir picture is behind every page, in place of the drawn scene.
+- Instrument icons and captions are larger, and a short last row of dials is centered.
+- Choosing US units now changes every figure on the site, including the log's base temperature, distances and the words on Terms and Sources.

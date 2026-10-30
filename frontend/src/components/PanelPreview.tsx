@@ -8,6 +8,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { formatDateTime } from "@tollbooth-dpyc/web";
 import { tourTarget, useTimezone } from "@tollbooth-dpyc/web/react";
+import { define } from "../lib/glossary";
 import { instrumentLabel } from "../lib/instruments";
 import type { Reading } from "../lib/field";
 import { previewDays, previewReadings, previewSeries } from "../lib/preview";
@@ -52,6 +53,7 @@ export default function PanelPreview({ lead }: { lead: ReactNode }) {
           <h2 className="mb-2 flex flex-wrap items-center gap-3 text-lg">
             {instrumentLabel(opened.sensor_kind, opened.channel, opened.channel_name)}: the last day <Mark />
           </h2>
+          <p className="prose-line mb-2 text-sm">{define(opened.sensor_kind)?.said(units)}</p>
           <Trace series={previewSeries(opened, now)} units={units} label={opened.sensor_kind} />
         </section>
 

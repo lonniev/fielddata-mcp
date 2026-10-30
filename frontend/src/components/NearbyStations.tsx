@@ -5,17 +5,15 @@ import { LocateFixed } from "lucide-react";
 import { useProperty } from "@tollbooth-dpyc/web/react";
 import { isChosen, toggleChoice, withoutStation } from "../lib/chosen";
 import { listStations, nearbyStations, type NearbyStation, type Station } from "../lib/field";
-import { formatQuantity } from "../lib/units";
+import { formatDistance, formatQuantity, radiusChoices } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
-
-const RADII = [5, 15, 30, 50, 100];
 
 export default function NearbyStations() {
   const [units] = useUnits();
   const [chosen, setChosen] = useProperty<string[]>("chosen_stations", []);
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
-  const [radius, setRadius] = useState(15);
+  const [reach, setReach] = useState(1);
   const [found, setFound] = useState<NearbyStation[] | null>(null);
   const [saved, setSaved] = useState<Station[]>([]);
   const [busy, setBusy] = useState(false);
@@ -47,7 +45,7 @@ export default function NearbyStations() {
     setBusy(true);
     setProblem("");
     try {
-      setFound((await nearbyStations(Number(lat), Number(lon), radius)).stations);
+      setFound((await nearbyStations(Number(lat), Number(lon), radius.km)).stations);
     } catch (e) {
       setProblem((e as Error).message);
     } finally {
@@ -55,6 +53,8 @@ export default function NearbyStations() {
     }
   }
 
+  const radii = radiusChoices(units);
+  const radius = radii[reach];
   const air = (s: NearbyStation) => {
     const r = s.readings.find((x) => x.sensor_kind === "air_temperature");
     return r ? formatQuantity(r.quantity, r.unit, units) : "";
@@ -72,14 +72,14 @@ export default function NearbyStations() {
         <label className="grid gap-1">Longitude<input className="field w-32" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} /></label>
         <button type="button" className="chip" onClick={locate}><LocateFixed size={16} aria-hidden /> Use my location</button>
         <label className="grid gap-1">Within
-          <select className="field" value={radius} onChange={(e) => setRadius(Number(e.target.value))}>
-            {RADII.map((r) => <option key={r} value={r}>{r} km</option>)}
+          <select className="field" value={reach} onChange={(e) => setReach(Number(e.target.value))}>
+            {radii.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}
           </select>
         </label>
         <button type="button" className="chip chip-accent" disabled={busy || !canSearch} onClick={() => void search()}>{busy ? "Looking…" : "Find stations"}</button>
       </div>
       {problem && <p className="mt-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
-      {found?.length === 0 && <p className="prose-line mt-3 text-sm">No station is published within {radius} km of that place.</p>}
+      {found?.length === 0 && <p className="prose-line mt-3 text-sm">No station is published within {radius.label} of that place.</p>}
       {(others.length > 0 || (found?.length ?? 0) > 0) && (
         <ul className="mt-3 grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
           {others.map((s) => (
@@ -96,7 +96,7 @@ export default function NearbyStations() {
                 <input type="checkbox" className="size-5 accent-[var(--tb-accent)]" checked={isChosen(chosen, s.station_id)} onChange={() => setChosen(toggleChoice(chosen, s.choice))} />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium">{s.name}</span>
-                  <span className="block font-mono text-xs text-[var(--tb-muted)]">{s.distance_km} km{air(s) && ` · ${air(s)}`}</span>
+                  <span className="block font-mono text-xs text-[var(--tb-muted)]">{formatDistance(s.distance_km, units)}{air(s) && ` · ${air(s)}`}</span>
                 </span>
               </label>
             </li>

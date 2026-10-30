@@ -38,14 +38,17 @@ function imageOf(src: unknown): string | null {
   return typeof src === "string" && src.startsWith("https://cdn.shopify.com/") ? src : null;
 }
 
-/** Collections that hold something, the ones grown from the ground first. */
+/** The collections FieldData offers, in the order it offers them. */
+const OFFERED = ["terroir", "mcps", "dpyc-merch", "books"];
+
+/** The offered collections that hold something. */
 export function parseCollections(feed: unknown): CafeCollection[] {
   const rows = (feed as { collections?: Record<string, unknown>[] })?.collections;
   if (!Array.isArray(rows)) return [];
   const found = rows.flatMap((c) => {
     const handle = String(c.handle ?? "");
     const count = Number(c.products_count ?? 0);
-    if (!HANDLE.test(handle) || !(count > 0)) return [];
+    if (!OFFERED.includes(handle) || !(count > 0)) return [];
     return [{
       handle,
       title: String(c.title ?? handle),
@@ -55,8 +58,7 @@ export function parseCollections(feed: unknown): CafeCollection[] {
       url: `${CAFE_URL}/collections/${handle}`,
     }];
   });
-  const rank = (c: CafeCollection) => (c.handle === "terroir" ? 0 : c.handle === "coffees" ? 1 : 2);
-  return found.sort((a, b) => rank(a) - rank(b));
+  return found.sort((a, b) => OFFERED.indexOf(a.handle) - OFFERED.indexOf(b.handle));
 }
 
 export function parseProducts(feed: unknown): CafeProduct[] {

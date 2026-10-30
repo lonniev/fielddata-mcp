@@ -9,6 +9,7 @@ import PanelPreview from "../components/PanelPreview";
 import StationKeys from "../components/StationKeys";
 import Trace from "../components/Trace";
 import { currentReadings, listStations, readingHistory, type Reading, type Series, type Station } from "../lib/field";
+import { define } from "../lib/glossary";
 import { instrumentLabel } from "../lib/instruments";
 import { useUnits } from "../lib/useUnits";
 
@@ -139,6 +140,7 @@ export default function Panel() {
           <h2 className="mb-2 text-lg">
             {instrumentLabel(opened.reading.sensor_kind, opened.reading.channel, opened.reading.channel_name)}: the last day
           </h2>
+          <p className="prose-line mb-2 text-sm">{define(opened.reading.sensor_kind)?.said(units)}</p>
           {opened.failed ? (
             <p className="text-sm text-[var(--tb-err-ink)]">{opened.failed}</p>
           ) : opened.series ? (

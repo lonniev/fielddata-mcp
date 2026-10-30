@@ -27,13 +27,15 @@ test("collections hold something, name a safe handle and show only the store's i
     { handle: "books", title: "Books", products_count: 3, image: { src: "https://evil.example/x.png" } },
     { handle: "empty", title: "Empty", products_count: 0 },
     { handle: "../up", title: "Up", products_count: 2 },
+    { handle: "coffees", title: "Coffees", products_count: 9 },
+    { handle: "mcps", title: "MCPs", products_count: 21 },
     { handle: "terroir", title: "Terroir", products_count: 6, image: { src: "https://cdn.shopify.com/t.png" }, description: "<p>Soil</p>" },
   ] });
-  assert.deepEqual(found.map((c) => c.handle), ["terroir", "books"]);
+  assert.deepEqual(found.map((c) => c.handle), ["terroir", "mcps", "books"]);
   assert.equal(found[0].says, "Soil");
   assert.equal(found[0].image, "https://cdn.shopify.com/t.png");
-  assert.equal(found[1].image, null);
-  assert.equal(found[1].url, "https://cafe.tollbooth-dpyc.com/collections/books");
+  assert.equal(found[2].image, null);
+  assert.equal(found[2].url, "https://cafe.tollbooth-dpyc.com/collections/books");
 });
 
 test("a malformed feed is an empty shelf", () => {

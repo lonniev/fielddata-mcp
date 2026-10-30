@@ -1,8 +1,9 @@
 /** The account page: the package's panels in their one order, with the station keys and display units. */
 
-import { AccountPage, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
+import { AccountPage, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
 import NearbyStations from "../components/NearbyStations";
 import StationKeys from "../components/StationKeys";
+import WalletPanel from "../components/WalletPanel";
 import { useUnits } from "../lib/useUnits";
 import type { UnitSystem } from "../lib/units";
 
@@ -59,7 +60,16 @@ export default function Profile() {
     <div className="page">
       <AccountPage
         npub={session.npub}
-        before={<><StationKeys npub={session.npub} /><NearbyStations /></>}
+        heading={null}
+        profile={false}
+        before={
+          <>
+            <WalletPanel brief />
+            <NostrProfilePanel npub={session.npub} />
+            <StationKeys npub={session.npub} />
+            <NearbyStations />
+          </>
+        }
         between={{ timezone: <Units /> }}
         theme={{ classNames: { chip: "chip", active: "chip chip-on" } }}
         timezone={{ classNames: { select: "field" } }}
@@ -73,7 +83,6 @@ export default function Profile() {
         onSignOut={session.signOut}
         classNames={{
           root: "account",
-          heading: "card p-5 text-3xl lg:col-span-2",
           section: "card p-5",
           sectionHeading: "font-display mb-1 text-lg",
           sectionIntro: "prose-line mb-3 text-sm",

@@ -8,7 +8,6 @@ import { createRoot } from "react-dom/client";
 import { configureTollbooth } from "@tollbooth-dpyc/web";
 import { SiteNav, ThemeToggle, TourProvider } from "@tollbooth-dpyc/web/react";
 import { NAV_CLASSES } from "../src/App";
-import Fieldscape from "../src/components/Fieldscape";
 import ProfileView from "../src/views/Profile";
 import WalletView from "../src/views/Wallet";
 import { AppShell } from "@tollbooth-dpyc/web/react";
@@ -65,11 +64,11 @@ function ShareCard() {
 }
 
 /** The wallet with no session: the coupons draw, and the balance says it could not be read. */
-const WalletReview = () => <TourProvider tours={{}}><Fieldscape /><WalletView /></TourProvider>;
+const WalletReview = () => <TourProvider tours={{}}><div aria-hidden="true" className="backdrop" /><WalletView /></TourProvider>;
 
 /** The account page laid out with no real session behind it. */
 const ProfileReview = () => (
-  <AppShell theme="dark" signedOut={() => <TourProvider tours={{}}><Fieldscape /><ProfileView /></TourProvider>}>
+  <AppShell theme="dark" signedOut={() => <TourProvider tours={{}}><div aria-hidden="true" className="backdrop" /><ProfileView /></TourProvider>}>
     {() => null}
   </AppShell>
 );
@@ -79,7 +78,7 @@ function NavReview() {
   useEffect(() => { document.querySelector<HTMLButtonElement>('button[aria-label="Account"]')?.click(); }, []);
   return (
     <>
-      <Fieldscape />
+      <div aria-hidden="true" className="backdrop" />
       <header className="site-bar px-4 py-2">
         <SiteNav
           brand={<b>FieldData</b>}

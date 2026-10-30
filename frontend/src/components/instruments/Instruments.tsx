@@ -21,8 +21,10 @@ function Glyph({ kind }: { kind: string }) {
   const name = GLYPH_FOR[kind];
   const url = name && GLYPHS[`../../assets/weather-icons/wi-${name}.svg`];
   if (!url) return null;
-  const mask = `url("${url}") center / contain no-repeat`;
-  return <span aria-hidden="true" className="inline-block h-4 w-4 bg-current align-[-3px]" style={{ mask, WebkitMask: mask }} />;
+  // The raindrops are drawn small inside their square.
+  const size = name === "raindrops" ? "200%" : "contain";
+  const mask = `url("${url}") center / ${size} no-repeat`;
+  return <span aria-hidden="true" className="inline-block h-6 w-6 shrink-0 bg-current" style={{ mask, WebkitMask: mask }} />;
 }
 
 const GLYPH_FOR: Record<string, string> = {
@@ -55,8 +57,8 @@ function Bezel({ children, kind, label, figure }: { children: React.ReactNode; k
         {children}
       </svg>
       <figcaption className="mt-1.5 text-center">
-        <span className="block font-mono text-sm">{figure}</span>
-        <span className="flex items-center justify-center gap-1 font-display text-xs text-[var(--tb-muted)]">
+        <span className="block font-mono text-base">{figure}</span>
+        <span className="flex items-center justify-center gap-1 font-display text-sm leading-tight text-[var(--tb-muted)]">
           <Glyph kind={kind} />
           {label}
         </span>
