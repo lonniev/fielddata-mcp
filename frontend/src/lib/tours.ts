@@ -1,17 +1,18 @@
-/** The tours: the package's two shared ones, and FieldData's own pages. */
+/** The tours: the package's shared ones, and FieldData's own pages. */
 
-import { accountTour, signInTour, type Tour } from "@tollbooth-dpyc/web";
+import { accountTour, signInTour, walletTour, type Tour } from "@tollbooth-dpyc/web";
 
 export const TOURS: Record<string, Tour> = {
   signin: signInTour(),
+  wallet: walletTour(),
   account: accountTour("account", [
-    { target: "keys", title: "Your station", says: "Your station keys travel by Nostr message and never touch this page." },
+    { target: "keys", title: "Your station keys", says: "Send your station keys by Nostr message, and your stations appear on the panel." },
     { target: "nearby", title: "Nearby stations", says: "Tick stations near you, and they join your own on the panel." },
     { target: "profile.units", title: "Units", says: "Choose metric or US figures for every instrument on this device." },
   ]),
   panel: { page: "panel", steps: [
     { target: "keys", title: "Connect your station", says: "Connect your Ecowitt or Ambient Weather account here, and your stations appear on the panel." },
-    { target: "panel.station", title: "Your station", says: "This is the station the panel is reading." },
+    { target: "panel.station", title: "The station", says: "Pick any station you connected or ticked nearby, and the panel reads it." },
     { target: "panel.deck", title: "Your instruments", says: "Each sensor has its own instrument: tap one to see its last day." },
     { target: "panel.refresh", title: "Read again", says: "Tap here when you want a fresh reading." },
   ] },

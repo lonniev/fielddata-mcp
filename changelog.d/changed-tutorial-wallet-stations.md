@@ -1,0 +1,1 @@
+- The tutorial now walks the wallet page, including paying from Strike or Cash App, and covers picking among your connected and nearby stations.
