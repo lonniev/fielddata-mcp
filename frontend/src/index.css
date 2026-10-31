@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "@tollbooth-dpyc/web/theme.css";
-@import "@tollbooth-dpyc/web/price-sheet.css";
+@import "@tollbooth-dpyc/web/wallet.css";
 @import "@tollbooth-dpyc/web/tour.css";
 @source "../node_modules/@tollbooth-dpyc/web/dist";
 
@@ -248,7 +248,6 @@ h2,
     }
   }
 
-  .wallet,
   .account {
     display: grid;
     gap: 1rem;
@@ -279,65 +278,6 @@ h2,
     font-size: 0.6875rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-  }
-
-  .coupon-row {
-    display: grid;
-    gap: 0.875rem;
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  }
-  .coupon {
-    --notch: radial-gradient(circle 0.55rem at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
-      radial-gradient(circle 0.55rem at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
-    display: flex;
-    align-items: stretch;
-    min-height: 7rem;
-    color: var(--paper-ink);
-    text-align: left;
-    background: var(--paper);
-    -webkit-mask: var(--notch);
-    mask: var(--notch);
-    transition: transform 120ms ease;
-  }
-  .coupon:hover:not(:disabled) {
-    transform: rotate(-0.6deg) translateY(-1px);
-  }
-  .coupon[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--paper) 72%, #6fa04a);
-  }
-  .coupon:disabled {
-    opacity: 0.6;
-  }
-  .coupon-stub {
-    display: grid;
-    place-items: center;
-    width: 4.25rem;
-    color: var(--paper);
-    background: #4f7a35;
-    border-right: 2px dashed var(--paper);
-  }
-  .coupon-body {
-    display: grid;
-    align-content: center;
-    gap: 0.05rem;
-    flex: 1;
-    margin: 0.4rem 0.7rem 0.4rem 0.4rem;
-    padding: 0.25rem 0.7rem;
-    border: 1px dashed var(--paper-rule);
-    border-radius: 0.375rem;
-  }
-  .coupon-name {
-    font-family: var(--font-display);
-    font-size: 1.0625rem;
-  }
-  .coupon-sats {
-    font-family: var(--font-mono);
-    font-size: 1.625rem;
-    line-height: 1.15;
-  }
-  .coupon-small {
-    font-size: 0.75rem;
-    opacity: 0.75;
   }
 
   .tile {
@@ -383,4 +323,41 @@ h2,
   .fluid {
     transition: y 900ms ease-out, height 900ms ease-out;
   }
+}
+
+/* The shared wallet in FieldData's dress: farm-stand coupons on the tiles. */
+:root {
+  --tb-wallet-display-font: var(--font-display);
+  --tb-wallet-figure-font: var(--font-mono);
+  --tb-wallet-radius: 0.875rem;
+  --tb-wallet-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  --tb-tile-bg: var(--paper);
+  --tb-tile-ink: var(--paper-ink);
+  --tb-tile-line: var(--paper-rule);
+  --tb-tile-radius: 0.25rem;
+  --tb-tile-chosen-bg: color-mix(in srgb, var(--paper) 72%, #6fa04a);
+  --tb-tile-chosen-line: #4f7a35;
+}
+.tb-wallet-tile {
+  padding: 0;
+  border-style: dashed;
+  overflow: hidden;
+  align-items: stretch;
+}
+.tb-wallet-tile-mark {
+  width: 2.25rem;
+  color: var(--paper);
+  background: #4f7a35;
+  border-right: 2px dashed var(--paper);
+}
+.tb-wallet-tile-body {
+  align-content: center;
+  padding: 0.375rem 0.5rem;
+}
+.tb-wallet-tile-name {
+  font-family: var(--font-display);
+}
+.tb-wallet-tile-sats {
+  font-family: var(--font-mono);
+  font-size: 1rem;
 }

@@ -1,9 +1,9 @@
 /** The account page: the package's panels in their one order, with the station keys and display units. */
 
-import { AccountPage, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
+import { AccountPage, BalanceAndTopUp, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
 import NearbyStations from "../components/NearbyStations";
 import StationKeys from "../components/StationKeys";
-import WalletPanel from "../components/WalletPanel";
+import { decorateTile } from "../lib/tiles";
 import { useUnits } from "../lib/useUnits";
 import type { UnitSystem } from "../lib/units";
 
@@ -64,7 +64,7 @@ export default function Profile() {
         profile={false}
         before={
           <>
-            <WalletPanel brief />
+            <BalanceAndTopUp decorateTile={decorateTile} />
             <NostrProfilePanel npub={session.npub} />
             <StationKeys npub={session.npub} />
             <NearbyStations />
@@ -73,7 +73,6 @@ export default function Profile() {
         between={{ timezone: <Units /> }}
         theme={{ classNames: { chip: "chip", active: "chip chip-on" } }}
         timezone={{ classNames: { select: "field" } }}
-        coupons={false}
         usage={{ classNames: USAGE }}
         build={{
           classNames: BUILD,

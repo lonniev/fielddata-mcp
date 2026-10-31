@@ -93,7 +93,11 @@ function NavReview() {
   );
 }
 
+/** A plain site's palette on the same wallet: only colors and fonts differ. */
+const PLAIN = { "--tb-accent": "#7a3e9d", "--tb-tile-bg": "#f4eefb", "--tb-tile-ink": "#2a1a38", "--tb-tile-line": "#b9a2cc", "--tb-tile-radius": "1rem" };
+
 const VIEWS: Record<string, () => React.JSX.Element> = { "?og": ShareCard, "?wallet": WalletReview, "?profile": ProfileReview, "?nav": NavReview };
 if (location.hash === "#light") document.documentElement.dataset.theme = "light";
+if (location.hash === "#plain") Object.entries(PLAIN).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
 const View = VIEWS[location.search] ?? Harness;
 createRoot(document.getElementById("root")!).render(<View />);
