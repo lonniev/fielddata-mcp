@@ -1,0 +1,1 @@
+- The wallet is now the shared one from tollbooth-web 3.0.0, with farm-stand tiles, a QR code on an open invoice, and smaller amounts.
