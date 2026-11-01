@@ -20,6 +20,8 @@ export interface Station {
   name: string;
   timezone: string;
   model: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface Series {

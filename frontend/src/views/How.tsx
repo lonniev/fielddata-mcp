@@ -7,7 +7,7 @@ const STEPS: { title: string; says: string }[] = [
   { title: "Sign in with Nostr", says: "Use an npub you already hold, or make a new key on the sign-in page." },
   { title: "Fund your balance", says: "Pay a Lightning invoice from any Lightning wallet, or from the cash balance you hold in Strike or Cash App, and your tool fees draw on those sats." },
   { title: "Connect your station", says: "Make an Application Key and an API Key at ecowitt.net or ambientweather.net/account, then send them by the Nostr message FieldData sends you." },
-  { title: "Add stations nearby", says: "Tick stations near you on your Profile, and they join your own on the panel." },
+  { title: "Add stations nearby", says: "Find stations near you on your Profile, on the list or the map, and tick them to join your own on the panel." },
   { title: "Read your instruments", says: "Open the panel for the latest readings, and tap any instrument for its last day." },
   { title: "Keep the log", says: "The log gives each day's temperature, frost hours, rain and degree-days." },
 ];
