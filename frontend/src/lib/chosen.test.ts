@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { answered } from "./answered.ts";
-import { isChosen, shortStationId, toggleChoice, withoutStation } from "./chosen.ts";
+import { chosenRow, isChosen, shortStationId, toggleChoice } from "./chosen.ts";
 import { VENDORS, standing } from "./vendors.ts";
 
 const ID = "5bdb8963-9d54-46f8-854c-528d175f28ff";
@@ -18,11 +18,17 @@ test("ticking adds, ticking again removes, and the rest stay", () => {
   assert.deepEqual(on, [other, CHOICE]);
   assert.ok(isChosen(on, ID));
   assert.deepEqual(toggleChoice(on, CHOICE), [other]);
-  assert.deepEqual(withoutStation(on, ID), [other]);
 });
 
 test("a station whose place moved is still the same station", () => {
   assert.deepEqual(toggleChoice([CHOICE], `ambient:441001:-733000:${shortStationId(ID)}`), []);
+});
+
+test("a choice reads on its own, and a malformed one can still be removed", () => {
+  assert.deepEqual(chosenRow(CHOICE), { choice: CHOICE, short: shortStationId(ID), vendor: "ambient", latitude: 44.1, longitude: -73.3 });
+  const odd = chosenRow("oddment");
+  assert.equal(odd.latitude, null);
+  assert.deepEqual(toggleChoice([odd.choice, CHOICE], odd.choice), [CHOICE]);
 });
 
 test("an account stands by whole pairs", () => {

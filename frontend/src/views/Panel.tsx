@@ -106,6 +106,7 @@ export default function Panel() {
               {station?.name ?? "No stations yet"}
             </h1>
           )}
+          <Link to="/profile#nearby" className="chip">Add or remove stations</Link>
           <span className="ml-auto font-mono text-xs text-[var(--tb-muted)]">
             {newest && formatDateTime(newest, zone)}
           </span>

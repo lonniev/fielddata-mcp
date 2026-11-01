@@ -1,15 +1,18 @@
 /** A checklist of stations whose owners publish them. A ticked station joins the patron's stations, read like any other. */
 
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { LocateFixed, Map as MapIcon } from "lucide-react";
 import { useProperty } from "@tollbooth-dpyc/web/react";
-import { isChosen, toggleChoice, withoutStation } from "../lib/chosen";
+import { chosenRow, isChosen, shortStationId, toggleChoice } from "../lib/chosen";
 import { listStations, nearbyStations, type NearbyStation, type Station } from "../lib/field";
 import { formatDistance, formatQuantity, radiusChoices } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
+import { VENDORS } from "../lib/vendors";
 import StationMap, { type MapStation } from "./StationMap";
 
 export default function NearbyStations() {
+  const { hash } = useLocation();
   const [units] = useUnits();
   const [chosen, setChosen] = useProperty<string[]>("chosen_stations", []);
   const [lat, setLat] = useState("");
@@ -21,12 +24,16 @@ export default function NearbyStations() {
   const [onMap, setOnMap] = useState(false);
   const [problem, setProblem] = useState("");
 
-  // One reading on arrival, so chosen stations show by name with no search.
   useEffect(() => {
-    if (!chosen.length) return;
+    if (hash === "#nearby") document.getElementById("nearby")?.scrollIntoView();
+  }, [hash]);
+
+  // One reading once there are choices, which the account may bring after arrival, to show them by name.
+  const hasChoices = chosen.length > 0;
+  useEffect(() => {
+    if (!hasChoices) return;
     listStations().then((r) => setSaved(r.stations)).catch((e: Error) => setProblem(e.message));
-    // eslint-disable-next-line
-  }, []);
+  }, [hasChoices]);
 
   function locate() {
     setProblem("");
@@ -61,14 +68,20 @@ export default function NearbyStations() {
     const r = s.readings.find((x) => x.sensor_kind === "air_temperature");
     return r ? formatQuantity(r.quantity, r.unit, units) : "";
   };
-  const shownIds = new Set((found ?? []).map((s) => s.station_id));
-  const others = saved.filter((s) => isChosen(chosen, s.station_id) && !shownIds.has(s.station_id));
+  const others = chosen.map(chosenRow)
+    .filter((c) => !(found ?? []).some((s) => shortStationId(s.station_id) === c.short))
+    .map((c) => {
+      const known = saved.find((s) => shortStationId(s.station_id) === c.short);
+      const vendor = VENDORS.find((v) => v.id === c.vendor)?.label ?? "Saved";
+      const near = c.latitude != null && c.longitude != null ? ` near ${c.latitude.toFixed(2)}, ${c.longitude.toFixed(2)}` : "";
+      return { ...c, name: known?.name ?? `${vendor} station${near}` };
+    });
   const place = lat.trim() !== "" && lon.trim() !== "" && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon))
     ? { latitude: Number(lat), longitude: Number(lon) }
     : null;
   const onTheMap: MapStation[] = [
     ...others.flatMap((s) => (s.latitude != null && s.longitude != null
-      ? [{ id: s.station_id, name: s.name, latitude: s.latitude, longitude: s.longitude, chosen: true, line: "", toggle: () => setChosen(withoutStation(chosen, s.station_id)) }]
+      ? [{ id: s.choice, name: s.name, latitude: s.latitude, longitude: s.longitude, chosen: true, line: "", toggle: () => setChosen(toggleChoice(chosen, s.choice)) }]
       : [])),
     ...(found ?? []).map((s) => ({
       id: s.station_id, name: s.name, latitude: s.latitude, longitude: s.longitude,
@@ -80,9 +93,21 @@ export default function NearbyStations() {
   const canSearch = place !== null;
 
   return (
-    <section data-tour="nearby" className="card p-5 lg:col-span-2">
+    <section id="nearby" data-tour="nearby" className="card p-5 lg:col-span-2">
       <h2 className="font-display text-lg">Nearby stations</h2>
-      <p className="prose-line mb-3 text-sm">Tick a station its owner publishes, and it joins your stations on the panel and for your AI agents.</p>
+      <p className="prose-line mb-3 text-sm">Tick a station its owner publishes, and it joins your stations on the panel and for your AI agents. Untick it to remove it.</p>
+      {others.length > 0 && (
+        <ul className="mb-4 grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+          {others.map((s) => (
+            <li key={s.choice} className="border-t border-[var(--tb-line)] py-2 text-sm">
+              <label className="flex items-center gap-3">
+                <input type="checkbox" className="size-5 accent-[var(--tb-accent)]" checked onChange={() => setChosen(toggleChoice(chosen, s.choice))} />
+                <span className="min-w-0 flex-1 font-medium">{s.name}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="flex flex-wrap items-end gap-3 text-sm">
         <label className="grid gap-1">Latitude<input className="field w-32" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} /></label>
         <label className="grid gap-1">Longitude<input className="field w-32" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} /></label>
@@ -104,16 +129,8 @@ export default function NearbyStations() {
       )}
       {problem && <p className="mt-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
       {found?.length === 0 && <p className="prose-line mt-3 text-sm">No station is published within {radius.label} of that place.</p>}
-      {(others.length > 0 || (found?.length ?? 0) > 0) && (
+      {(found?.length ?? 0) > 0 && (
         <ul className="mt-3 grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-          {others.map((s) => (
-            <li key={s.station_id} className="border-t border-[var(--tb-line)] py-2 text-sm">
-              <label className="flex items-center gap-3">
-                <input type="checkbox" className="size-5 accent-[var(--tb-accent)]" checked onChange={() => setChosen(withoutStation(chosen, s.station_id))} />
-                <span className="min-w-0 flex-1 font-medium">{s.name}</span>
-              </label>
-            </li>
-          ))}
           {(found ?? []).map((s) => (
             <li key={s.station_id} className="border-t border-[var(--tb-line)] py-2 text-sm">
               <label className="flex items-center gap-3">
