@@ -1,0 +1,1 @@
+- Every chosen station now shows on Profile and can be removed, including one that is not answering, and the panel links to where stations are added or removed.

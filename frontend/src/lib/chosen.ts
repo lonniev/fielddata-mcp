@@ -15,6 +15,28 @@ export function toggleChoice(chosen: readonly string[], choice: string): string[
     : [...chosen, choice];
 }
 
-/** Take a station out when only its id is known. */
-export const withoutStation = (chosen: readonly string[], stationId: string) =>
-  chosen.filter((c) => shortOfChoice(c) !== shortStationId(stationId));
+/** The degrees of a place as a choice stores them. */
+const PLACE_UNITS = 10000;
+
+export interface ChosenRow {
+  choice: string;
+  short: string;
+  vendor: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/** A choice read on its own, so a station shows and can be removed whether or not it answers today. */
+export function chosenRow(choice: string): ChosenRow {
+  const [vendor = "", lat = "", lon = ""] = choice.split(":");
+  const latitude = Number(lat) / PLACE_UNITS;
+  const longitude = Number(lon) / PLACE_UNITS;
+  const placed = lat !== "" && lon !== "" && Number.isFinite(latitude) && Number.isFinite(longitude);
+  return {
+    choice,
+    short: shortOfChoice(choice),
+    vendor,
+    latitude: placed ? latitude : null,
+    longitude: placed ? longitude : null,
+  };
+}
