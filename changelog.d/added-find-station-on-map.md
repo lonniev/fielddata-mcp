@@ -1,0 +1,1 @@
+- Find on map: nearby stations and your place show on a map. Tap the ground to set your place, and tap a station to add or remove it.

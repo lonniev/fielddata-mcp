@@ -1,12 +1,13 @@
 /** A checklist of stations whose owners publish them. A ticked station joins the patron's stations, read like any other. */
 
 import { useEffect, useState } from "react";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, Map as MapIcon } from "lucide-react";
 import { useProperty } from "@tollbooth-dpyc/web/react";
 import { isChosen, toggleChoice, withoutStation } from "../lib/chosen";
 import { listStations, nearbyStations, type NearbyStation, type Station } from "../lib/field";
 import { formatDistance, formatQuantity, radiusChoices } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
+import StationMap, { type MapStation } from "./StationMap";
 
 export default function NearbyStations() {
   const [units] = useUnits();
@@ -17,6 +18,7 @@ export default function NearbyStations() {
   const [found, setFound] = useState<NearbyStation[] | null>(null);
   const [saved, setSaved] = useState<Station[]>([]);
   const [busy, setBusy] = useState(false);
+  const [onMap, setOnMap] = useState(false);
   const [problem, setProblem] = useState("");
 
   // One reading on arrival, so chosen stations show by name with no search.
@@ -61,7 +63,21 @@ export default function NearbyStations() {
   };
   const shownIds = new Set((found ?? []).map((s) => s.station_id));
   const others = saved.filter((s) => isChosen(chosen, s.station_id) && !shownIds.has(s.station_id));
-  const canSearch = lat.trim() !== "" && lon.trim() !== "" && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon));
+  const place = lat.trim() !== "" && lon.trim() !== "" && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon))
+    ? { latitude: Number(lat), longitude: Number(lon) }
+    : null;
+  const onTheMap: MapStation[] = [
+    ...others.flatMap((s) => (s.latitude != null && s.longitude != null
+      ? [{ id: s.station_id, name: s.name, latitude: s.latitude, longitude: s.longitude, chosen: true, line: "", toggle: () => setChosen(withoutStation(chosen, s.station_id)) }]
+      : [])),
+    ...(found ?? []).map((s) => ({
+      id: s.station_id, name: s.name, latitude: s.latitude, longitude: s.longitude,
+      chosen: isChosen(chosen, s.station_id),
+      line: `${formatDistance(s.distance_km, units)}${air(s) && ` · ${air(s)}`}`,
+      toggle: () => setChosen(toggleChoice(chosen, s.choice)),
+    })),
+  ];
+  const canSearch = place !== null;
 
   return (
     <section data-tour="nearby" className="card p-5 lg:col-span-2">
@@ -71,6 +87,7 @@ export default function NearbyStations() {
         <label className="grid gap-1">Latitude<input className="field w-32" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} /></label>
         <label className="grid gap-1">Longitude<input className="field w-32" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} /></label>
         <button type="button" className="chip" onClick={locate}><LocateFixed size={16} aria-hidden /> Use my location</button>
+        <button type="button" className={onMap ? "chip chip-on" : "chip"} aria-pressed={onMap} onClick={() => setOnMap((v) => !v)}><MapIcon size={16} aria-hidden /> Find on map</button>
         <label className="grid gap-1">Within
           <select className="field" value={reach} onChange={(e) => setReach(Number(e.target.value))}>
             {radii.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}
@@ -78,6 +95,13 @@ export default function NearbyStations() {
         </label>
         <button type="button" className="chip chip-accent" disabled={busy || !canSearch} onClick={() => void search()}>{busy ? "Looking…" : "Find stations"}</button>
       </div>
+      {onMap && (
+        <StationMap place={place} stations={onTheMap}
+          onPlace={(latitude, longitude) => {
+            setLat(latitude.toFixed(4));
+            setLon(longitude.toFixed(4));
+          }} />
+      )}
       {problem && <p className="mt-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
       {found?.length === 0 && <p className="prose-line mt-3 text-sm">No station is published within {radius.label} of that place.</p>}
       {(others.length > 0 || (found?.length ?? 0) > 0) && (

@@ -7,7 +7,7 @@ export const TOURS: Record<string, Tour> = {
   wallet: walletTour(),
   account: accountTour("account", [
     { target: "keys", title: "Your station keys", says: "Send your station keys by Nostr message, and your stations appear on the panel." },
-    { target: "nearby", title: "Nearby stations", says: "Tick stations near you, and they join your own on the panel." },
+    { target: "nearby", title: "Nearby stations", says: "Tick stations near you, from the list or the map, and they join your own on the panel." },
     { target: "profile.units", title: "Units", says: "Choose metric or US figures for every instrument on this device." },
   ]),
   panel: { page: "panel", steps: [
