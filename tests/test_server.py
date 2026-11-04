@@ -392,7 +392,6 @@ def real_courier(monkeypatch):
     courier._sessions = {}
     courier._credential_ttl = 1
     courier._operator_nsec = ""
-    courier._send_card_dm = False
 
     async def base(self):
         return courier
