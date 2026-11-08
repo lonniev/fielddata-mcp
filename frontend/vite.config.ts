@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { execSync } from 'child_process'
 import { readFileSync } from 'fs'
+import { agentGuide } from '@tollbooth-dpyc/web/agent-guide'
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
@@ -23,7 +24,19 @@ function resolveCommit(): string {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(), tailwindcss(),
+    agentGuide({
+      name: "FieldData",
+      summary: "What a grower's own weather station and soil probes measured, read from their Ecowitt or Ambient Weather account.",
+      site: "https://fielddata.tollbooth-dpyc.com",
+      mcpUrl: "https://fielddata-mcp.fastmcp.app/mcp",
+      toolPrefix: "fielddata",
+      source: "https://github.com/lonniev/fielddata-mcp",
+      registryName: "io.github.lonniev/fielddata-mcp",
+      body: "agent-guide.md",
+    }),
+  ],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_COMMIT__: JSON.stringify(resolveCommit()),
