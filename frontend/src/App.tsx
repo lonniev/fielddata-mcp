@@ -1,21 +1,25 @@
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BookOpen, FileText, Gauge, ScrollText, ShoppingBasket, Wallet as WalletIcon } from "lucide-react";
 import { AppShell, SiteNav, TourProvider, matchesPath, useAppShell } from "@tollbooth-dpyc/web/react";
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { PublicPanel } from "./components/PanelPreview";
+import Waiting from "./components/Waiting";
 import { Sextant } from "./components/instruments/Instruments";
 import { TOURS } from "./lib/tours";
-import Catalog, { CatalogCollection } from "./views/Catalog";
 import Home from "./views/Home";
-import How from "./views/How";
-import Log from "./views/Log";
-import Panel from "./views/Panel";
-import Prices from "./views/Prices";
-import Profile from "./views/Profile";
-import Sources from "./views/Sources";
-import Terms from "./views/Terms";
-import TermsOfUse from "./views/TermsOfUse";
-import Wallet from "./views/Wallet";
+
+// Each page past the front door is its own chunk, fetched the first time it opens.
+const Catalog = lazy(() => import("./views/Catalog"));
+const CatalogCollection = lazy(() => import("./views/Catalog").then((m) => ({ default: m.CatalogCollection })));
+const How = lazy(() => import("./views/How"));
+const Log = lazy(() => import("./views/Log"));
+const Panel = lazy(() => import("./views/Panel"));
+const Prices = lazy(() => import("./views/Prices"));
+const Profile = lazy(() => import("./views/Profile"));
+const Sources = lazy(() => import("./views/Sources"));
+const Terms = lazy(() => import("./views/Terms"));
+const TermsOfUse = lazy(() => import("./views/TermsOfUse"));
+const Wallet = lazy(() => import("./views/Wallet"));
 
 const WELCOME = "Your own weather station and soil probes, read as one panel of instruments.";
 
@@ -142,22 +146,24 @@ function Site() {
         <div aria-hidden="true" className="backdrop" />
         <Nav />
         <main className="flex-1">
-          <Routes>
-            <Route index element={<Home />} />
-            <Route path="how" element={<How />} />
-            <Route path="prices" element={<Prices />} />
-            <Route path="catalog" element={<Catalog />} />
-            <Route path="catalog/:handle" element={<CatalogCollection />} />
-            <Route path="sources" element={<Sources />} />
-            <Route path="terms" element={<Terms />} />
-            <Route path="terms-of-use" element={<TermsOfUse />} />
-            <Route path="signin" element={session.signedIn ? <Navigate to="/panel" replace /> : <div className="page"><div className="card mx-auto max-w-3xl p-6">{gate}</div></div>} />
-            <Route path="panel" element={session.signedIn ? <Panel /> : <PublicPanel />} />
-            <Route path="log" element={<Session><Log /></Session>} />
-            <Route path="wallet" element={<Session><Wallet /></Session>} />
-            <Route path="profile" element={<Session><Profile /></Session>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<Waiting heading="Opening the page…" />}>
+            <Routes>
+              <Route index element={<Home />} />
+              <Route path="how" element={<How />} />
+              <Route path="prices" element={<Prices />} />
+              <Route path="catalog" element={<Catalog />} />
+              <Route path="catalog/:handle" element={<CatalogCollection />} />
+              <Route path="sources" element={<Sources />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="terms-of-use" element={<TermsOfUse />} />
+              <Route path="signin" element={session.signedIn ? <Navigate to="/panel" replace /> : <div className="page"><div className="card mx-auto max-w-3xl p-6">{gate}</div></div>} />
+              <Route path="panel" element={session.signedIn ? <Panel /> : <PublicPanel />} />
+              <Route path="log" element={<Session><Log /></Session>} />
+              <Route path="wallet" element={<Session><Wallet /></Session>} />
+              <Route path="profile" element={<Session><Profile /></Session>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </main>
         <Footer />
       </TourProvider>
