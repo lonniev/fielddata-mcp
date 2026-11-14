@@ -17,17 +17,30 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Opened = { reading: Reading; series: Series | null; failed: string };
 
+type LastRead = { readings: Reading[]; readAt: string };
+
+/** What the Panel last showed, kept while the page lives so a return shows it at once and reads anew behind it. */
+type Kept = { npub: string; ready: boolean; stations: Station[]; reads: Record<string, LastRead> };
+let kept: Kept | null = null;
+
+function keptFor(npub: string): Kept {
+  if (kept?.npub !== npub) kept = { npub, ready: false, stations: [], reads: {} };
+  return kept;
+}
+
 export default function Panel() {
   useTour("panel");
   const { session } = useAppShell();
   const [, zone] = useTimezone();
   const [units] = useUnits();
-  const [ready, setReady] = useState<boolean | null>(null);
-  const [stations, setStations] = useState<Station[]>([]);
+  const seen = kept?.npub === session.npub ? kept : null;
+  const [ready, setReady] = useState<boolean | null>(seen ? seen.ready : null);
+  const [stations, setStations] = useState<Station[]>(seen?.stations ?? []);
   const [chosen, setChosen] = useProperty<string>("station", "");
   const [chosenStations] = useProperty<string[]>("chosen_stations", []);
-  const [readings, setReadings] = useState<Reading[]>([]);
-  const [readAt, setReadAt] = useState("");
+  const shownFirst = seen?.reads[(seen.stations.find((s) => s.station_id === chosen) ?? seen.stations[0])?.station_id ?? ""];
+  const [readings, setReadings] = useState<Reading[]>(shownFirst?.readings ?? []);
+  const [readAt, setReadAt] = useState(shownFirst?.readAt ?? "");
   const [problem, setProblem] = useState("");
   const [opened, setOpened] = useState<Opened | null>(null);
 
@@ -35,23 +48,30 @@ export default function Panel() {
 
   const read = useCallback(async (stationId: string) => {
     setProblem("");
+    const last = keptFor(session.npub).reads[stationId];
+    setReadings(last?.readings ?? []);
+    setReadAt(last?.readAt ?? "");
     try {
-      setReadings((await currentReadings(stationId)).readings);
-      setReadAt(new Date().toISOString());
+      const fresh = { readings: (await currentReadings(stationId)).readings, readAt: new Date().toISOString() };
+      keptFor(session.npub).reads[stationId] = fresh;
+      setReadings(fresh.readings);
+      setReadAt(fresh.readAt);
     } catch (e) {
       setProblem((e as Error).message);
     }
-  }, []);
+  }, [session.npub]);
 
   const load = useCallback(async () => {
     setProblem("");
     try {
       const status = await getPatronOnboardingStatus(session.npub);
       const readable = status.ready || chosenStations.length > 0;
+      // Ready and the station list arrive together, so no moment shows the guest panel.
+      const found = readable ? (await listStations()).stations : [];
+      Object.assign(keptFor(session.npub), { ready: readable, stations: found });
+      setStations(found);
       setReady(readable);
       if (!readable) return;
-      const found = (await listStations()).stations;
-      setStations(found);
       const first = found.find((s) => s.station_id === chosen) ?? found[0];
       if (first) await read(first.station_id);
     } catch (e) {
