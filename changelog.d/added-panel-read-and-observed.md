@@ -1,0 +1,1 @@
+- The Panel shows two times: when you read the station, and when the station observed what it reports.

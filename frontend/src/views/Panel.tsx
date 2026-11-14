@@ -27,6 +27,7 @@ export default function Panel() {
   const [chosen, setChosen] = useProperty<string>("station", "");
   const [chosenStations] = useProperty<string[]>("chosen_stations", []);
   const [readings, setReadings] = useState<Reading[]>([]);
+  const [readAt, setReadAt] = useState("");
   const [problem, setProblem] = useState("");
   const [opened, setOpened] = useState<Opened | null>(null);
 
@@ -36,6 +37,7 @@ export default function Panel() {
     setProblem("");
     try {
       setReadings((await currentReadings(stationId)).readings);
+      setReadAt(new Date().toISOString());
     } catch (e) {
       setProblem((e as Error).message);
     }
@@ -107,9 +109,14 @@ export default function Panel() {
             </h1>
           )}
           <Link to="/profile#nearby" className="chip">Add or remove stations</Link>
-          <span className="ml-auto font-mono text-xs text-[var(--tb-muted)]">
-            {newest && formatDateTime(newest, zone)}
-          </span>
+          {readAt && (
+            <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-2 text-right text-sm">
+              <dt className="text-[var(--tb-muted)]">Read</dt>
+              <dd className="font-mono">{formatDateTime(readAt, zone)}</dd>
+              <dt className="text-[var(--tb-muted)]">Observed</dt>
+              <dd className="font-mono">{newest ? formatDateTime(newest, zone) : "—"}</dd>
+            </dl>
+          )}
           {station && (
             <span {...tourTarget("panel.refresh")}>
               <RefreshButton onRefresh={() => read(station.station_id)} label="Read the instruments" classNames={{ root: "chip" }} />
