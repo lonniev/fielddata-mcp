@@ -1,0 +1,3 @@
+- The Panel keeps its last reading while you visit other pages, and reads anew behind it when you return.
+- The Panel no longer flashes the sample instruments while your stations load.
+- While the Panel finds or reads your stations, it shows quotations on weather and climate.
