@@ -1,0 +1,1 @@
+- Profile's wallet and Sponsorship cards line up with its other cards.

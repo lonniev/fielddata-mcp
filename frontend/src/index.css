@@ -331,6 +331,7 @@ h2,
   --tb-wallet-display-font: var(--font-display);
   --tb-wallet-figure-font: var(--font-mono);
   --tb-wallet-radius: 0.875rem;
+  --tb-wallet-pad: 1.25rem;
   --tb-wallet-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
   --tb-tile-bg: var(--paper);
   --tb-tile-ink: var(--paper-ink);
