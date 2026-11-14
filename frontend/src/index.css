@@ -363,3 +363,12 @@ h2,
   font-family: var(--font-mono);
   font-size: 1rem;
 }
+
+/* A wait worth reading: Waiting wraps the shared QuoteScroller. */
+.waiting { display: grid; gap: 0.75rem; text-align: right; }
+.waiting-head { color: var(--tb-muted); font-size: 0.9375rem; }
+.waiting-figure { margin: 0; }
+.waiting-text { margin: 0; font-size: 1.125rem; line-height: 1.45; font-style: italic; }
+.waiting-mark { color: var(--tb-accent); font-style: normal; }
+.waiting-author { margin-top: 0.25rem; color: var(--tb-muted); font-size: 0.875rem; }
+.waiting-author::before { content: "— "; }

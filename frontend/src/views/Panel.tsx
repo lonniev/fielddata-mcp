@@ -8,6 +8,7 @@ import Deck from "../components/instruments/Deck";
 import PanelPreview from "../components/PanelPreview";
 import StationKeys from "../components/StationKeys";
 import Trace from "../components/Trace";
+import Waiting from "../components/Waiting";
 import { currentReadings, listStations, readingHistory, type Reading, type Series, type Station } from "../lib/field";
 import { define } from "../lib/glossary";
 import { instrumentLabel } from "../lib/instruments";
@@ -42,6 +43,7 @@ export default function Panel() {
   const [readings, setReadings] = useState<Reading[]>(shownFirst?.readings ?? []);
   const [readAt, setReadAt] = useState(shownFirst?.readAt ?? "");
   const [problem, setProblem] = useState("");
+  const [reading, setReading] = useState(false);
   const [opened, setOpened] = useState<Opened | null>(null);
 
   const station = stations.find((s) => s.station_id === chosen) ?? stations[0];
@@ -51,6 +53,7 @@ export default function Panel() {
     const last = keptFor(session.npub).reads[stationId];
     setReadings(last?.readings ?? []);
     setReadAt(last?.readAt ?? "");
+    setReading(true);
     try {
       const fresh = { readings: (await currentReadings(stationId)).readings, readAt: new Date().toISOString() };
       keptFor(session.npub).reads[stationId] = fresh;
@@ -58,6 +61,8 @@ export default function Panel() {
       setReadAt(fresh.readAt);
     } catch (e) {
       setProblem((e as Error).message);
+    } finally {
+      setReading(false);
     }
   }, [session.npub]);
 
@@ -157,9 +162,21 @@ export default function Panel() {
         />
       )}
 
+      {ready === null && !problem && (
+        <div className="card p-4">
+          <Waiting heading="Finding your stations…" />
+        </div>
+      )}
+
       {readings.length > 0 && (
         <div {...tourTarget("panel.deck")} className="card p-4">
           <Deck readings={readings} units={units} onOpen={open} wide />
+        </div>
+      )}
+
+      {reading && (
+        <div className="card p-4">
+          <Waiting heading={readings.length > 0 ? "Reading the station for newer values…" : "Reading the station…"} />
         </div>
       )}
 
