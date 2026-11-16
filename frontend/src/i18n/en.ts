@@ -438,5 +438,8 @@ type StripPlural<K> = K extends `${infer Base}_${"zero" | "one" | "two" | "few" 
 /** A key as code asks for it: `x` stands for `x_one` / `x_other`, read with `{ count }`. */
 export type MessageKey = StripPlural<EnglishKey>;
 export type Messages = Record<EnglishKey, string>;
+type PluralBase = EnglishKey extends infer K ? (K extends `${infer Base}_other` ? Base : never) : never;
+/** One language's words: English's keys, plus the plural forms that language has beyond English's two. */
+export type Translation = Partial<Messages> & Partial<Record<`${PluralBase}_${"zero" | "two" | "few" | "many"}`, string>>;
 
 export default en as Messages;
