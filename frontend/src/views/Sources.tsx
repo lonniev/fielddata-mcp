@@ -1,83 +1,91 @@
 /** Where every figure comes from and what was done to it, so a grower can check any of it. */
 
+import { useT, type Translate } from "../i18n";
 import { CAFE_URL } from "../lib/cafe";
 import { formatWhole, type UnitSystem } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
 
-const cards = (units: UnitSystem): { title: string; says: string[]; link?: [string, string] }[] => [
-  { title: "Your Ecowitt station", says: [
-    "An Ecowitt station's readings come from your own account on Ecowitt.net, through its version 3 API.",
-    "All Ecowitt gateways upload there, the 4G WittField included.",
-  ], link: ["Ecowitt API reference", "https://doc.ecowitt.net/web/#/apiv3en"] },
-  { title: "Your Ambient Weather station", says: [
-    "An Ambient Weather station's readings come from your own account on ambientweather.net, through its REST API.",
-    "Ambient allows one request a second, so a long first read of the log can take around half a minute.",
-    "The log counts a day's rain from the station's daily total, and its extra temperature sensors are not read.",
-  ], link: ["Ambient Weather API reference", "https://github.com/ambient-weather/api-docs"] },
-  { title: "Units and clocks", says: [
-    "FieldData asks the vendor for metric units and converts by the unit each value arrives with, and this site then shows the units you chose on your Profile.",
-    "Every reading is reported in UTC, and each day in the log is your station's own local day.",
+const cards = (t: Translate, units: UnitSystem): { title: string; says: string[]; link?: [string, string] }[] => [
+  { title: t("views.sources.ecowitt.title"), says: [
+    t("views.sources.ecowitt.says1"),
+    t("views.sources.ecowitt.says2"),
+  ], link: [t("views.sources.ecowitt.link"), "https://doc.ecowitt.net/web/#/apiv3en"] },
+  { title: t("views.sources.ambient.title"), says: [
+    t("views.sources.ambient.says1"),
+    t("views.sources.ambient.says2"),
+    t("views.sources.ambient.says3"),
+  ], link: [t("views.sources.ambient.link"), "https://github.com/ambient-weather/api-docs"] },
+  { title: t("views.sources.units.title"), says: [
+    t("views.sources.units.says1"),
+    t("views.sources.units.says2"),
   ] },
-  { title: "Nearby stations", says: [
-    "A station you tick on your Profile is read from what its owner publishes, through the service behind Ambient Weather's own map.",
-    "That service is undocumented and may change, and it gives the latest readings only, so a nearby station's history needs its owner's keys.",
-    "Its siting and calibration are its owner's.",
+  { title: t("views.sources.nearby.title"), says: [
+    t("views.sources.nearby.says1"),
+    t("views.sources.nearby.says2"),
+    t("views.sources.nearby.says3"),
   ] },
-  { title: "Frost hours", says: [
-    `Each sample at or below ${formatWhole(0, "°C", units)} counts for the time that sample stands for.`,
-    "The log reads half-hour samples, so each cold one adds half an hour.",
+  { title: t("views.sources.frost.title"), says: [
+    t("views.sources.frost.says1", { freezing: formatWhole(0, "°C", units) }),
+    t("views.sources.frost.says2"),
   ] },
-  { title: "Degree-days", says: [
-    "The log uses the daily mean method: the larger of zero and (low + high) ÷ 2 − base.",
-    "You choose the base temperature when you read the log.",
+  { title: t("views.sources.degreeDays.title"), says: [
+    t("views.sources.degreeDays.says1"),
+    t("views.sources.degreeDays.says2"),
   ] },
-  { title: "Rain", says: [
-    "A day's rain is the highest value of the station's running total that day.",
-    "Ecowitt resets that total at local midnight, and FieldData takes Ambient Weather's daily total to do the same.",
+  { title: t("views.sources.rain.title"), says: [
+    t("views.sources.rain.says1"),
+    t("views.sources.rain.says2"),
   ] },
-  { title: "What is kept", says: [
-    "Answers stay in a one-minute cache and readings are not stored.",
-    "Your vendor keys are stored encrypted under your npub, and you may delete them at any time.",
+  { title: t("views.sources.kept.title"), says: [
+    t("views.sources.kept.says1"),
+    t("views.sources.kept.says2"),
   ] },
   { title: "Good Earth", says: [
-    "Good Earth projects what a block of ground should do, and FieldData reports what it did.",
+    t("views.sources.goodEarth.says1"),
   ], link: ["Good Earth", "https://goodearth.tollbooth-dpyc.com"] },
-  { title: "The wallet list", says: [
-    "The wallets offered under Need a wallet come from the DPYC Oracle each time you open it.",
-  ], link: ["DPYC community", "https://github.com/lonniev/dpyc-community"] },
-  { title: "The Catalog", says: [
-    "The Catalog reads the Good Brew café's public feed, and the café takes every order.",
+  { title: t("views.sources.wallets.title"), says: [
+    t("views.sources.wallets.says1"),
+  ], link: [t("views.sources.wallets.link"), "https://github.com/lonniev/dpyc-community"] },
+  { title: t("views.sources.catalog.title"), says: [
+    t("views.sources.catalog.says1"),
   ], link: ["Good Brew café", CAFE_URL] },
-  { title: "Instrument faces", says: [
-    "The instrument icons are Weather Icons by Erik Flowers, under the SIL OFL 1.1.",
+  { title: t("views.sources.icons.title"), says: [
+    t("views.sources.icons.says1"),
   ], link: ["Weather Icons", "https://erikflowers.github.io/weather-icons/"] },
-  { title: "The code", says: [
-    "FieldData and the Tollbooth DPYC™ runtime are open source under Apache-2.0.",
-  ], link: ["FieldData source", "https://github.com/lonniev/fielddata-mcp"] },
+  { title: t("views.sources.code.title"), says: [
+    t("views.sources.code.says1"),
+  ], link: [t("views.sources.code.link"), "https://github.com/lonniev/fielddata-mcp"] },
 ];
 
-const AMBIENT_REACH: [string, string, string][] = [
-  ["5 minutes", "7 days", "1 year"],
-  ["30 minutes", "31 days", "1 year"],
+/** A span of time: how many, and of what. */
+type Span = [number, "minute" | "hour" | "day" | "year"];
+
+const AMBIENT_REACH: [Span, Span, Span][] = [
+  [[5, "minute"], [7, "day"], [1, "year"]],
+  [[30, "minute"], [31, "day"], [1, "year"]],
 ];
 
-const REACH: [string, string, string][] = [
-  ["5 minutes", "1 day", "90 days"],
-  ["30 minutes", "7 days", "1 year"],
-  ["4 hours", "31 days", "2 years"],
-  ["1 day", "1 year", "4 years"],
+const REACH: [Span, Span, Span][] = [
+  [[5, "minute"], [1, "day"], [90, "day"]],
+  [[30, "minute"], [7, "day"], [1, "year"]],
+  [[4, "hour"], [31, "day"], [2, "year"]],
+  [[1, "day"], [1, "year"], [4, "year"]],
 ];
+
+/** "5 minutes", "1 year": the catalog holds each unit's _one and _other forms. */
+const spanText = (t: Translate, [count, unit]: Span) => t(`views.sources.${unit}` as Parameters<Translate>[0], { count });
 
 export default function Sources() {
+  const t = useT();
   const [units] = useUnits();
   return (
     <div className="page space-y-4">
       <header className="card p-5">
-        <h1 className="text-3xl">Sources</h1>
-        <p className="prose-line mt-1 text-sm">Every figure on this site comes from a place you can check, by arithmetic you can repeat.</p>
+        <h1 className="text-3xl">{t("views.sources.title")}</h1>
+        <p className="prose-line mt-1 text-sm">{t("views.sources.intro")}</p>
       </header>
       <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
-        {cards(units).map((c) => (
+        {cards(t, units).map((c) => (
           <section key={c.title} className="card p-5">
             <h2 className="text-lg">{c.title}</h2>
             {c.says.map((line) => <p key={line} className="prose-line mt-1 text-sm">{line}</p>)}
@@ -85,27 +93,27 @@ export default function Sources() {
           </section>
         ))}
         <section className="card p-5">
-          <h2 className="text-lg">How far back Ecowitt reaches</h2>
+          <h2 className="text-lg">{t("views.sources.ecowittReach")}</h2>
           <table className="mt-2 w-full text-left text-sm">
             <thead className="text-[var(--tb-muted)]">
-              <tr><th className="py-1 font-normal">Sample</th><th className="py-1 font-normal">Each request</th><th className="py-1 font-normal">Reach</th></tr>
+              <tr><th className="py-1 font-normal">{t("views.sources.sample")}</th><th className="py-1 font-normal">{t("views.sources.eachRequest")}</th><th className="py-1 font-normal">{t("views.sources.reach")}</th></tr>
             </thead>
             <tbody className="font-mono">
-              {REACH.map(([sample, span, reach]) => (
-                <tr key={sample} className="border-t border-[var(--tb-line)]"><td className="py-1">{sample}</td><td className="py-1">{span}</td><td className="py-1">{reach}</td></tr>
+              {REACH.map((row) => (
+                <tr key={row[0].join()} className="border-t border-[var(--tb-line)]">{row.map((span, i) => <td key={i} className="py-1">{spanText(t, span)}</td>)}</tr>
               ))}
             </tbody>
           </table>
         </section>
         <section className="card p-5">
-          <h2 className="text-lg">How far FieldData reads Ambient Weather</h2>
+          <h2 className="text-lg">{t("views.sources.ambientReach")}</h2>
           <table className="mt-2 w-full text-left text-sm">
             <thead className="text-[var(--tb-muted)]">
-              <tr><th className="py-1 font-normal">Sample</th><th className="py-1 font-normal">Each call</th><th className="py-1 font-normal">Reach</th></tr>
+              <tr><th className="py-1 font-normal">{t("views.sources.sample")}</th><th className="py-1 font-normal">{t("views.sources.eachCall")}</th><th className="py-1 font-normal">{t("views.sources.reach")}</th></tr>
             </thead>
             <tbody className="font-mono">
-              {AMBIENT_REACH.map(([sample, span, reach]) => (
-                <tr key={sample} className="border-t border-[var(--tb-line)]"><td className="py-1">{sample}</td><td className="py-1">{span}</td><td className="py-1">{reach}</td></tr>
+              {AMBIENT_REACH.map((row) => (
+                <tr key={row[0].join()} className="border-t border-[var(--tb-line)]">{row.map((span, i) => <td key={i} className="py-1">{spanText(t, span)}</td>)}</tr>
               ))}
             </tbody>
           </table>

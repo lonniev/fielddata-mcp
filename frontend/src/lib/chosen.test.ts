@@ -3,6 +3,9 @@ import { test } from "node:test";
 import { answered } from "./answered.ts";
 import { chosenRow, isChosen, shortStationId, toggleChoice } from "./chosen.ts";
 import { VENDORS, standing } from "./vendors.ts";
+import { registerFieldData } from "../i18n/index.ts";
+
+await registerFieldData();
 
 const ID = "5bdb8963-9d54-46f8-854c-528d175f28ff";
 const CHOICE = `ambient:441000:-733000:${shortStationId(ID)}`;

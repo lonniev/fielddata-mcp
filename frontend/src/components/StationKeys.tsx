@@ -10,14 +10,16 @@ import {
   requestPatronCredentials,
   type PatronOnboardingResult,
 } from "@tollbooth-dpyc/web";
-import { useTimezone } from "@tollbooth-dpyc/web/react";
+import { Tx, useTimezone } from "@tollbooth-dpyc/web/react";
+import { WORDS, useT } from "../i18n";
 import { VENDORS, standing, type VendorAccount } from "../lib/vendors";
 
 type Exchange = { vendor: string; phrase: string; relay: string };
 
-const LABELS = { connected: "Connected", partial: "One key on file", none: "Not connected" };
+const LABELS = { connected: "ui.stationKeys.connected", partial: "ui.stationKeys.partial", none: "ui.stationKeys.none" } as const;
 
 export default function StationKeys({ npub, onConnected }: { npub: string; onConnected?: () => void }) {
+  const t = useT();
   const [, zone] = useTimezone();
   const [status, setStatus] = useState<PatronOnboardingResult | null>(null);
   const [exchange, setExchange] = useState<Exchange | null>(null);
@@ -47,7 +49,7 @@ export default function StationKeys({ npub, onConnected }: { npub: string; onCon
   const open = (vendor: VendorAccount) =>
     attempt(async () => {
       const r = await requestPatronCredentials(npub);
-      if (!r.success || !r.nonce) throw new Error(r.message ?? "The invitation could not be sent.");
+      if (!r.success || !r.nonce) throw new Error(r.message ?? t("ui.stationKeys.inviteFailed"));
       setExchange({ vendor: vendor.id, phrase: r.nonce, relay: r.rendezvous_relay ?? "" });
     });
 
@@ -55,7 +57,7 @@ export default function StationKeys({ npub, onConnected }: { npub: string; onCon
     attempt(async () => {
       const r = await receivePatronCredentials(npub, phrase);
       if (!r.success || !(r.stored_fields ?? []).length) {
-        throw new Error(r.error ?? r.message ?? "No reply found yet: send it, then try again.");
+        throw new Error(r.error ?? r.message ?? t("ui.stationKeys.noReply"));
       }
       setExchange(null);
       await check();
@@ -72,8 +74,8 @@ export default function StationKeys({ npub, onConnected }: { npub: string; onCon
 
   return (
     <section data-tour="keys" className="card p-5 lg:col-span-2">
-      <h2 className="font-display text-lg">Your station accounts</h2>
-      <p className="prose-line mb-3 text-sm">Your keys travel by Nostr message and are stored encrypted, and this page never sees them.</p>
+      <h2 className="font-display text-lg">{t("ui.stationKeys.heading")}</h2>
+      <p className="prose-line mb-3 text-sm">{t("ui.stationKeys.intro")}</p>
       <ul className="divide-y divide-[var(--tb-line)]">
         {VENDORS.map((vendor) => {
           const { state, deliveredAt } = standing(vendor, status?.configured ?? []);
@@ -84,32 +86,32 @@ export default function StationKeys({ npub, onConnected }: { npub: string; onCon
                 <div className="min-w-40 flex-1">
                   <div className="font-medium">{vendor.label}</div>
                   <div className={`text-xs ${state === "connected" ? "text-[var(--tb-ok)]" : "text-[var(--tb-muted)]"}`}>
-                    {status ? LABELS[state] : "Checking…"}
-                    {state === "connected" && deliveredAt && ` · delivered ${formatDateTime(deliveredAt, zone)}`}
+                    {status ? t(LABELS[state]) : t("ui.stationKeys.checking")}
+                    {state === "connected" && deliveredAt && ` · ${t("ui.stationKeys.delivered", { when: formatDateTime(deliveredAt, zone) })}`}
                   </div>
                 </div>
                 <a href={vendor.keysAt} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[var(--tb-accent)]">
-                  Make your keys <ExternalLink size={14} aria-hidden />
+                  {t("ui.stationKeys.makeKeys")} <ExternalLink size={14} aria-hidden />
                 </a>
                 <button type="button" className={state === "connected" ? "chip" : "chip chip-accent"} disabled={busy || !status} onClick={() => void open(vendor)}>
-                  {state === "connected" ? "Replace keys" : "Connect"}
+                  {state === "connected" ? t("ui.stationKeys.replace") : t("ui.stationKeys.connect")}
                 </button>
                 {state !== "none" && (removing === vendor.id ? (
                   <>
-                    <button type="button" className="chip" disabled={busy} onClick={() => void remove(vendor)}>Yes, remove</button>
-                    <button type="button" className="chip" disabled={busy} onClick={() => setRemoving("")}>Keep</button>
+                    <button type="button" className="chip" disabled={busy} onClick={() => void remove(vendor)}>{t("ui.stationKeys.confirmRemove")}</button>
+                    <button type="button" className="chip" disabled={busy} onClick={() => setRemoving("")}>{t("ui.stationKeys.keep")}</button>
                   </>
                 ) : (
-                  <button type="button" className="chip" disabled={busy} onClick={() => setRemoving(vendor.id)}>Remove</button>
+                  <button type="button" className="chip" disabled={busy} onClick={() => setRemoving(vendor.id)}>{t("ui.stationKeys.remove")}</button>
                 ))}
               </div>
               {mine && (
                 <div className="space-y-2 rounded-lg bg-[var(--tb-surface-2)] p-3 text-sm">
-                  <p>Check your Nostr messages for one marked <span className="font-mono">{mine.phrase}</span>, and reply with your {vendor.label} keys.</p>
-                  {mine.relay && <p className="text-xs text-[var(--tb-muted)]">Reply on <span className="font-mono">{mine.relay}</span>: replies elsewhere are missed.</p>}
+                  <p><Tx ns={WORDS} k="ui.stationKeys.checkMessages" vars={{ vendor: vendor.label }} components={{ phrase: <span className="font-mono">{mine.phrase}</span> }} /></p>
+                  {mine.relay && <p className="text-xs text-[var(--tb-muted)]"><Tx ns={WORDS} k="ui.stationKeys.replyOn" components={{ relay: <span className="font-mono">{mine.relay}</span> }} /></p>}
                   <div className="flex flex-wrap gap-2">
-                    <button type="button" className="chip chip-accent" disabled={busy} onClick={() => void collect(mine.phrase)}>I replied</button>
-                    <button type="button" className="chip" disabled={busy} onClick={() => setExchange(null)}>Cancel</button>
+                    <button type="button" className="chip chip-accent" disabled={busy} onClick={() => void collect(mine.phrase)}>{t("ui.stationKeys.replied")}</button>
+                    <button type="button" className="chip" disabled={busy} onClick={() => setExchange(null)}>{t("ui.stationKeys.cancel")}</button>
                   </div>
                 </div>
               )}

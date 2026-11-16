@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { compassPoint, instrumentFor, instrumentLabel, needleAngle, polar, scaleRatio } from "./instruments.ts";
+import { registerFieldData } from "../i18n/index.ts";
+
+await registerFieldData();
 
 describe("scaleRatio", () => {
   it("places a quantity on its scale", () => assert.equal(scaleRatio(1000, 950, 1050), 0.5));

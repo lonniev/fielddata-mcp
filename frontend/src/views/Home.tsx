@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import { useAppShell } from "@tollbooth-dpyc/web/react";
 import Deck from "../components/instruments/Deck";
+import { useT } from "../i18n";
 import type { Reading } from "../lib/field";
 import { useUnits } from "../lib/useUnits";
 import { CafeShelf } from "./Catalog";
@@ -26,59 +27,54 @@ export const SAMPLE: Reading[] = (
   observed_at: "2026-01-01T00:00:00Z",
 }));
 
-const WHY: { title: string; says: string }[] = [
-  { title: "Your own station", says: "Your station stays on your own vendor account, and FieldData reads it under your own keys." },
-  { title: "One shape of reading", says: "Every reading arrives in SI units and UTC, whichever station made it." },
-  { title: "Nothing kept", says: "Readings pass through to you: FieldData keeps a one-minute cache and no record of your ground." },
-  { title: "Beside the forecast", says: "Good Earth projects what a block of ground should do, and FieldData reports what it did." },
-];
+const WHY = [
+  { title: "views.home.why.station.title", says: "views.home.why.station.says" },
+  { title: "views.home.why.shape.title", says: "views.home.why.shape.says" },
+  { title: "views.home.why.kept.title", says: "views.home.why.kept.says" },
+  { title: "views.home.why.forecast.title", says: "views.home.why.forecast.says" },
+] as const;
 
 export default function Home() {
+  const t = useT();
   const { session } = useAppShell();
   const [units] = useUnits();
   return (
     <div className="page space-y-4">
       <section className="card grid items-center gap-6 p-6 lg:grid-cols-[1fr_1.15fr] lg:p-8">
         <div>
-          <h1 className="text-4xl leading-tight sm:text-5xl">What your own ground actually measured.</h1>
-          <p className="prose-line mt-4">
-            FieldData reads your weather station and soil probes as one panel of instruments, for you and for your AI agents.
-          </p>
+          <h1 className="text-4xl leading-tight sm:text-5xl">{t("views.home.title")}</h1>
+          <p className="prose-line mt-4">{t("views.home.lead")}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to={session.signedIn ? "/panel" : "/signin"} className="chip chip-accent">
-              {session.signedIn ? "Open the panel" : "Sign in"}
+              {session.signedIn ? t("views.home.openPanel") : t("views.home.signIn")}
             </Link>
-            <Link to="/how" className="chip">How it works</Link>
-            <Link to="/sources" className="chip">Sources</Link>
+            <Link to="/how" className="chip">{t("views.home.how")}</Link>
+            <Link to="/sources" className="chip">{t("views.home.sources")}</Link>
           </div>
         </div>
         <figure>
           <Deck readings={SAMPLE} units={units} />
-          <figcaption className="mt-2 text-center text-xs text-[var(--tb-muted)]">Illustrative readings.</figcaption>
+          <figcaption className="mt-2 text-center text-xs text-[var(--tb-muted)]">{t("views.home.illustrative")}</figcaption>
         </figure>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {WHY.map((w) => (
           <div key={w.title} className="card p-5">
-            <h2 className="text-lg">{w.title}</h2>
-            <p className="prose-line mt-1 text-sm">{w.says}</p>
+            <h2 className="text-lg">{t(w.title)}</h2>
+            <p className="prose-line mt-1 text-sm">{t(w.says)}</p>
           </div>
         ))}
       </section>
 
       <section className="card p-6">
-        <h2 className="text-xl">Built on Tollbooth DPYC™</h2>
+        <h2 className="text-xl">{t("views.home.builtOn")}</h2>
         <div className="mt-2 grid gap-x-8 gap-y-2 md:grid-cols-2">
-          <p className="prose-line text-sm">
-            DPYC™ stands for Don't Pester Your Customer™: you pre-fund a balance in Bitcoin Lightning and each reading draws on it, with no subscription or payment popup.
-          </p>
-          <p className="prose-line text-sm">
-            Your identity is a Nostr key, so FieldData asks for no email address and no password.
-          </p>
+          <p className="prose-line text-sm">{t("views.home.dpyc")}</p>
+          <p className="prose-line text-sm">{t("views.home.identity")}</p>
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link to="/prices" className="chip">Prices</Link>
+          <Link to="/prices" className="chip">{t("views.home.prices")}</Link>
           <a href="https://tollbooth-dpyc.com" target="_blank" rel="noopener noreferrer" className="chip">Tollbooth DPYC™</a>
         </div>
       </section>

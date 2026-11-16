@@ -3,6 +3,9 @@ import { test } from "node:test";
 import { GLOSSARY, GROUPS, define, searchGlossary } from "./glossary.ts";
 import { formatDistance, formatWhole, kmFromInput, radiusChoices } from "./units.ts";
 import { INSTRUMENT_KINDS } from "./instruments.ts";
+import { registerFieldData } from "../i18n/index.ts";
+
+await registerFieldData();
 
 test("every instrument on the panel has a definition", () => {
   for (const kind of INSTRUMENT_KINDS) assert.ok(define(kind), kind);

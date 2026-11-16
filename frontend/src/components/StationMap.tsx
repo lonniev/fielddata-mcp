@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
+import { useT } from "../i18n";
 
 const STREET_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const STREET_ATTRIBUTION = "© OpenStreetMap contributors";
@@ -30,6 +31,7 @@ export default function StationMap({ place, stations, onPlace }: {
   stations: MapStation[];
   onPlace: (latitude: number, longitude: number) => void;
 }) {
+  const t = useT();
   const host = useRef<HTMLDivElement | null>(null);
   const map = useRef<L.Map | null>(null);
   const placed = useRef<L.LayerGroup | null>(null);
@@ -59,11 +61,11 @@ export default function StationMap({ place, stations, onPlace }: {
     g.clearLayers();
     if (!place) return;
     L.circleMarker([place.latitude, place.longitude], { radius: 8, color: EDGE_COLOR, weight: 2, fillColor: PLACE_COLOR, fillOpacity: 1 })
-      .bindTooltip("Your place", { direction: "top", offset: [0, -6] })
+      .bindTooltip(t("ui.stationMap.yourPlace"), { direction: "top", offset: [0, -6] })
       .addTo(g);
     const here = L.latLng(place.latitude, place.longitude);
     if (!m.getBounds().contains(here) || m.getZoom() < PLACE_ZOOM) m.setView(here, Math.max(m.getZoom(), PLACE_ZOOM));
-  }, [place?.latitude, place?.longitude]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [place?.latitude, place?.longitude, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const g = markers.current;
@@ -97,12 +99,12 @@ export default function StationMap({ place, stations, onPlace }: {
               {tapped.line && <span className="block font-mono text-xs text-[var(--tb-muted)]">{tapped.line}</span>}
             </span>
             <button type="button" className={tapped.chosen ? "chip" : "chip chip-accent"} onClick={tapped.toggle}>
-              {tapped.chosen ? "Remove from my stations" : "Add to my stations"}
+              {tapped.chosen ? t("ui.stationMap.remove") : t("ui.stationMap.add")}
             </button>
           </div>
         )}
       </div>
-      <p className="prose-line text-sm">Tap the map to set your place, then choose Find stations.</p>
+      <p className="prose-line text-sm">{t("ui.stationMap.hint")}</p>
     </div>
   );
 }

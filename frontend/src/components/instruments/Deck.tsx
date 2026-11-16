@@ -3,6 +3,7 @@
 import { PANEL_ORDER, instrumentLabel, type SensorKind } from "../../lib/instruments";
 import type { Reading } from "../../lib/field";
 import type { UnitSystem } from "../../lib/units";
+import { useT } from "../../i18n";
 import { Gauge } from "./Instruments";
 
 export function sortForPanel<T extends Pick<Reading, "sensor_kind" | "channel">>(readings: readonly T[]): T[] {
@@ -25,13 +26,14 @@ export default function Deck({
   /** A whole page's width: more instruments to the row, so each stays dial-sized. */
   wide?: boolean;
 }) {
+  const t = useT();
   return (
     <div className={wide ? "deck deck-wide" : "deck"}>
       {sortForPanel(readings).map((r) => {
         const label = instrumentLabel(r.sensor_kind, r.channel, r.channel_name);
         const gauge = <Gauge kind={r.sensor_kind} quantity={r.quantity} unit={r.unit} units={units} label={label} />;
         return onOpen ? (
-          <button key={`${r.sensor_kind}|${r.channel}`} type="button" onClick={() => onOpen(r)} aria-label={`${label} trace`} className="rounded-full">
+          <button key={`${r.sensor_kind}|${r.channel}`} type="button" onClick={() => onOpen(r)} aria-label={t("ui.deck.trace", { label })} className="rounded-full">
             {gauge}
           </button>
         ) : (
