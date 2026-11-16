@@ -9,6 +9,7 @@ import PanelPreview from "../components/PanelPreview";
 import StationKeys from "../components/StationKeys";
 import Trace from "../components/Trace";
 import Waiting from "../components/Waiting";
+import { useT } from "../i18n";
 import { currentReadings, listStations, readingHistory, type Reading, type Series, type Station } from "../lib/field";
 import { define } from "../lib/glossary";
 import { instrumentLabel } from "../lib/instruments";
@@ -31,6 +32,7 @@ function keptFor(npub: string): Kept {
 
 export default function Panel() {
   useTour("panel");
+  const t = useT();
   const { session } = useAppShell();
   const [, zone] = useTimezone();
   const [units] = useUnits();
@@ -113,7 +115,7 @@ export default function Panel() {
           {stations.length > 1 ? (
             <select
               {...tourTarget("panel.station")}
-              aria-label="Station"
+              aria-label={t("views.panel.station")}
               className="field"
               value={station?.station_id ?? ""}
               onChange={(e) => {
@@ -130,21 +132,21 @@ export default function Panel() {
             </select>
           ) : (
             <h1 {...tourTarget("panel.station")} className="text-xl">
-              {station?.name ?? "No stations yet"}
+              {station?.name ?? t("views.panel.none")}
             </h1>
           )}
-          <Link to="/profile#nearby" className="chip">Add or remove stations</Link>
+          <Link to="/profile#nearby" className="chip">{t("views.panel.addRemove")}</Link>
           {readAt && (
             <dl className="ml-auto grid grid-cols-[auto_auto] gap-x-2 text-right text-sm">
-              <dt className="text-[var(--tb-muted)]">Read</dt>
+              <dt className="text-[var(--tb-muted)]">{t("views.panel.read")}</dt>
               <dd className="font-mono">{formatDateTime(readAt, zone)}</dd>
-              <dt className="text-[var(--tb-muted)]">Observed</dt>
+              <dt className="text-[var(--tb-muted)]">{t("views.panel.observed")}</dt>
               <dd className="font-mono">{newest ? formatDateTime(newest, zone) : "—"}</dd>
             </dl>
           )}
           {station && (
             <span {...tourTarget("panel.refresh")}>
-              <RefreshButton onRefresh={() => read(station.station_id)} label="Read the instruments" classNames={{ root: "chip" }} />
+              <RefreshButton onRefresh={() => read(station.station_id)} label={t("views.panel.readInstruments")} classNames={{ root: "chip" }} />
             </span>
           )}
         </header>
@@ -152,19 +154,19 @@ export default function Panel() {
 
       {problem && (
         <p className="rounded-lg border border-[var(--tb-err-line)] bg-[var(--tb-err-bg)] p-3 text-sm text-[var(--tb-err-ink)]">
-          {problem} <Link to="/wallet" className="underline">Wallet</Link>
+          {problem} <Link to="/wallet" className="underline">{t("views.panel.wallet")}</Link>
         </p>
       )}
 
       {(ready === false || (ready && stations.length === 0 && !problem)) && (
         <PanelPreview
-          lead={ready ? <p className="prose-line text-sm">Your station appears here once it reports to your account, or tick a nearby one on your Profile.</p> : null}
+          lead={ready ? <p className="prose-line text-sm">{t("views.panel.lead")}</p> : null}
         />
       )}
 
       {ready === null && !problem && (
         <div className="card p-4">
-          <Waiting heading="Finding your stations…" />
+          <Waiting heading={t("views.panel.finding")} />
         </div>
       )}
 
@@ -176,14 +178,14 @@ export default function Panel() {
 
       {reading && (
         <div className="card p-4">
-          <Waiting heading={readings.length > 0 ? "Reading the station for newer values…" : "Reading the station…"} />
+          <Waiting heading={readings.length > 0 ? t("views.panel.readingNewer") : t("views.panel.reading")} />
         </div>
       )}
 
       {opened && (
         <section className="card p-4">
           <h2 className="mb-2 text-lg">
-            {instrumentLabel(opened.reading.sensor_kind, opened.reading.channel, opened.reading.channel_name)}: the last day
+            {t("views.panel.lastDay", { instrument: instrumentLabel(opened.reading.sensor_kind, opened.reading.channel, opened.reading.channel_name) })}
           </h2>
           <p className="prose-line mb-2 text-sm">{define(opened.reading.sensor_kind)?.said(units)}</p>
           {opened.failed ? (
@@ -191,7 +193,7 @@ export default function Panel() {
           ) : opened.series ? (
             <Trace series={opened.series} units={units} label={opened.reading.sensor_kind} />
           ) : (
-            <p className="prose-line text-sm" aria-busy="true">Reading the trace…</p>
+            <p className="prose-line text-sm" aria-busy="true">{t("views.panel.readingTrace")}</p>
           )}
         </section>
       )}

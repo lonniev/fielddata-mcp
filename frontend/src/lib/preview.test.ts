@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { previewDays, previewReadings, previewSeries } from "./preview.ts";
+import { registerFieldData } from "../i18n/index.ts";
+
+await registerFieldData();
 
 const NOW = Date.UTC(2026, 9, 30, 12);
 

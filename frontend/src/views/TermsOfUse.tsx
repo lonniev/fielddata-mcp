@@ -1,4 +1,10 @@
-/** Terms of use. A draft for the owner's review: nothing here has had legal review. */
+/**
+ * Terms of use. A draft for the owner's review: nothing here has had legal review.
+ * The terms themselves stay in English, the language they are written and read in;
+ * only the heading follows the reader's language.
+ */
+
+import { useT } from "../i18n";
 
 const SECTIONS: { title: string; says: string[] }[] = [
   { title: "The service", says: [
@@ -35,10 +41,11 @@ const SECTIONS: { title: string; says: string[] }[] = [
 ];
 
 export default function Terms() {
+  const t = useT();
   return (
     <div className="page space-y-4">
-      <header className="card p-5"><h1 className="text-3xl">Terms of use</h1></header>
-      <div className="columns-1 gap-4 md:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
+      <header className="card p-5"><h1 className="text-3xl">{t("views.termsOfUse.title")}</h1></header>
+      <div lang="en" className="columns-1 gap-4 md:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">
         {SECTIONS.map((s) => (
           <section key={s.title} className="card p-5">
             <h2 className="text-lg">{s.title}</h2>

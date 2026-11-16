@@ -1,12 +1,16 @@
 /** A wait worth reading: the status line, then quotations on weather and climate. */
 
+import { useMemo } from "react";
 import { QuoteScroller } from "@tollbooth-dpyc/web/react";
-import { WEATHER_QUOTES } from "../lib/quotes";
+import { useT } from "../i18n";
+import { weatherQuotes } from "../lib/quotes";
 
 export default function Waiting({ heading }: { heading: string }) {
+  const t = useT();
+  const quotes = useMemo(() => weatherQuotes(t), [t]);
   return (
     <QuoteScroller
-      quotes={WEATHER_QUOTES}
+      quotes={quotes}
       heading={heading}
       spinner
       intervalMs={6000}

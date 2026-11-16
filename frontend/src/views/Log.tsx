@@ -6,6 +6,7 @@ import { dailySummary, listStations, type Station, type Summary, type SummaryDay
 import { celsiusToInput, convert, inputToCelsius, type UnitSystem } from "../lib/units";
 import { useUnits } from "../lib/useUnits";
 import Term from "../components/Term";
+import { useT, type Translate } from "../i18n";
 
 const PAGE_SIZE = 14;
 
@@ -21,16 +22,18 @@ export const figure = (q: number | null, unit: string, units: UnitSystem) => {
   return c.value.toFixed(c.places);
 };
 
-export const COLUMNS: { col: keyof SummaryDay; name: string; unit: string }[] = [
-  { col: "temp_min_c", name: "Low", unit: "°C" },
-  { col: "temp_max_c", name: "High", unit: "°C" },
-  { col: "frost_hours", name: "Frost h", unit: "" },
-  { col: "rain_mm", name: "Rain", unit: "mm" },
-  { col: "degree_days", name: "Degree-days", unit: "" },
+/** The log's columns; `name` is a key, read with `t`. */
+export const COLUMNS: { col: keyof SummaryDay; name: Parameters<Translate>[0]; unit: string }[] = [
+  { col: "temp_min_c", name: "views.log.col.low", unit: "°C" },
+  { col: "temp_max_c", name: "views.log.col.high", unit: "°C" },
+  { col: "frost_hours", name: "views.log.col.frost", unit: "" },
+  { col: "rain_mm", name: "views.log.col.rain", unit: "mm" },
+  { col: "degree_days", name: "views.log.col.degreeDays", unit: "" },
 ];
 
 export default function Log() {
   useTour("log");
+  const t = useT();
   const [units] = useUnits();
   const [chosen] = useProperty<string>("station", "");
   const [stations, setStations] = useState<Station[]>([]);
@@ -84,11 +87,11 @@ export default function Log() {
   return (
     <div className="page space-y-4">
       <div {...tourTarget("log.range")} className="card flex flex-wrap items-end gap-3 p-4 text-sm">
-        <h1 className="mr-auto self-center text-3xl">Log</h1>
-        <label className="grid gap-1">From<input type="date" className="field" value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></label>
-        <label className="grid gap-1">To<input type="date" className="field" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
-        <label className="grid gap-1">Base {convert(0, "°C", units).unit}<input type="number" className="field w-20" min={Math.round(celsiusToInput(-10, units))} max={Math.round(celsiusToInput(40, units))} value={Math.round(celsiusToInput(baseC, units) * 10) / 10} onChange={(e) => setBaseC(inputToCelsius(Number(e.target.value), units))} /></label>
-        <button type="button" className="chip chip-accent" onClick={() => void read({ ...sort, page: 0 })} disabled={reading}>Read the log</button>
+        <h1 className="mr-auto self-center text-3xl">{t("views.log.title")}</h1>
+        <label className="grid gap-1">{t("views.log.from")}<input type="date" className="field" value={from} max={to} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="grid gap-1">{t("views.log.to")}<input type="date" className="field" value={to} min={from} onChange={(e) => setTo(e.target.value)} /></label>
+        <label className="grid gap-1">{t("views.log.base", { unit: convert(0, "°C", units).unit })}<input type="number" className="field w-20" min={Math.round(celsiusToInput(-10, units))} max={Math.round(celsiusToInput(40, units))} value={Math.round(celsiusToInput(baseC, units) * 10) / 10} onChange={(e) => setBaseC(inputToCelsius(Number(e.target.value), units))} /></label>
+        <button type="button" className="chip chip-accent" onClick={() => void read({ ...sort, page: 0 })} disabled={reading}>{t("views.log.read")}</button>
       </div>
 
       <p className="card flex flex-wrap gap-x-5 gap-y-1 p-3 text-sm">
@@ -96,16 +99,16 @@ export default function Log() {
       </p>
 
       {problem && <p className="rounded-lg border border-[var(--tb-err-line)] bg-[var(--tb-err-bg)] p-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
-      {reading && !log && <p className="card prose-line p-5 text-sm" aria-busy="true">Reading the log…</p>}
+      {reading && !log && <p className="card prose-line p-5 text-sm" aria-busy="true">{t("views.log.reading")}</p>}
 
       {log && log.total > 0 && (
         <div {...tourTarget("log.table")} className="card overflow-x-auto" aria-busy={reading}>
           <table className="w-full text-right font-mono">
             <thead className="bg-[var(--tb-surface-2)] text-xs text-[var(--tb-muted)]">
               <tr>
-                <SortHeader label="Date" col="date" {...headerProps} classNames={{ cell: "px-4 py-3 text-left font-normal", active: "text-[var(--tb-accent)]" }} />
+                <SortHeader label={t("views.log.date")} col="date" {...headerProps} classNames={{ cell: "px-4 py-3 text-left font-normal", active: "text-[var(--tb-accent)]" }} />
                 {COLUMNS.map((c) => (
-                  <SortHeader key={c.col} label={`${c.name}${unitOf(c.unit)}`} col={c.col} {...headerProps} classNames={{ cell: "px-4 py-3 font-normal", active: "text-[var(--tb-accent)]" }} />
+                  <SortHeader key={c.col} label={`${t(c.name)}${unitOf(c.unit)}`} col={c.col} {...headerProps} classNames={{ cell: "px-4 py-3 font-normal", active: "text-[var(--tb-accent)]" }} />
                 ))}
               </tr>
             </thead>

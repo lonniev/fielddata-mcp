@@ -1,16 +1,17 @@
-/** The account page: the package's panels in their one order, with the station keys and display units. */
+/** The account page: the package's panels in their one order, with the station keys, display units and language. */
 
-import { AccountPage, BalanceAndTopUp, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
+import { AccountPage, BalanceAndTopUp, LanguageChooser, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
 import NearbyStations from "../components/NearbyStations";
+import { useT } from "../i18n";
 import StationKeys from "../components/StationKeys";
 import { decorateTile } from "../lib/tiles";
 import { useUnits } from "../lib/useUnits";
 import type { UnitSystem } from "../lib/units";
 
-const SYSTEMS: { id: UnitSystem; label: string }[] = [
-  { id: "si", label: "Metric" },
-  { id: "us", label: "US" },
-];
+const SYSTEMS = [
+  { id: "si", label: "views.profile.metric" },
+  { id: "us", label: "views.profile.us" },
+] as const satisfies readonly { id: UnitSystem; label: string }[];
 
 const USAGE = {
   root: "card p-5",
@@ -37,18 +38,30 @@ const BUILD = {
 };
 
 function Units() {
+  const t = useT();
   const [units, setUnits] = useUnits();
   return (
     <section data-tour="profile.units" className="card p-5">
-      <h2 className="text-lg">Units</h2>
-      <p className="prose-line mb-3 text-sm">The scales and figures on every instrument, on this device.</p>
+      <h2 className="text-lg">{t("views.profile.units")}</h2>
+      <p className="prose-line mb-3 text-sm">{t("views.profile.unitsIntro")}</p>
       <div className="flex gap-2">
         {SYSTEMS.map((s) => (
           <button key={s.id} type="button" onClick={() => setUnits(s.id)} aria-pressed={units === s.id} className={units === s.id ? "chip chip-on" : "chip"}>
-            {s.label}
+            {t(s.label)}
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+/** The reader's language, beside the units and drawn like them. */
+function Language() {
+  const t = useT();
+  return (
+    <section className="card p-5">
+      <h2 className="mb-3 text-lg">{t("views.profile.language")}</h2>
+      <LanguageChooser classNames={{ root: "flex flex-wrap gap-2", chip: "chip", active: "chip-on" }} />
     </section>
   );
 }
@@ -70,7 +83,7 @@ export default function Profile() {
             <NearbyStations />
           </>
         }
-        between={{ timezone: <Units /> }}
+        between={{ timezone: <><Units /><Language /></> }}
         theme={{ classNames: { chip: "chip", active: "chip chip-on" } }}
         timezone={{ classNames: { select: "field" } }}
         usage={{ classNames: USAGE }}

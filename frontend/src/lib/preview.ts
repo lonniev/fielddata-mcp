@@ -1,10 +1,13 @@
 /** A panel with no station behind it: a made-up farm, for a patron whose own station has not reported yet. */
 
+import { tr, type Translate } from "../i18n/index.ts";
 import type { Reading, Series, SummaryDay } from "./field";
 
 const HOUR_MS = 60 * 60 * 1000;
 
-const ROWS: [string, number | null, string | null, number, string][] = [
+type ProbeName = "lib.preview.vineyard" | "lib.preview.kitchenGarden" | "lib.preview.northField";
+
+const ROWS: [string, number | null, ProbeName | null, number, string][] = [
   ["air_temperature", null, null, 18.4, "°C"],
   ["relative_humidity", null, null, 64, "%"],
   ["pressure", null, null, 1016.5, "hPa"],
@@ -14,19 +17,20 @@ const ROWS: [string, number | null, string | null, number, string][] = [
   ["rain_total", null, null, 22.5, "mm"],
   ["solar_radiation", null, null, 420, "W/m²"],
   ["uv_index", null, null, 4, "index"],
-  ["soil_moisture", 1, "Vineyard row 4", 34, "%"],
-  ["soil_moisture", 2, "Kitchen garden", 41, "%"],
-  ["soil_temperature", 1, "Vineyard row 4", 14.2, "°C"],
-  ["leaf_wetness", 1, "North field", 18, "%"],
+  ["soil_moisture", 1, "lib.preview.vineyard", 34, "%"],
+  ["soil_moisture", 2, "lib.preview.kitchenGarden", 41, "%"],
+  ["soil_temperature", 1, "lib.preview.vineyard", 14.2, "°C"],
+  ["leaf_wetness", 1, "lib.preview.northField", 18, "%"],
 ];
 
-export function previewReadings(now: number): Reading[] {
-  return ROWS.map(([sensor_kind, channel, channel_name, quantity, unit]) => ({
+/** The made-up readings, their probes named in the language `t` speaks. */
+export function previewReadings(now: number, t: Translate = tr): Reading[] {
+  return ROWS.map(([sensor_kind, channel, probe, quantity, unit]) => ({
     station_id: "preview",
     vendor: "preview",
     sensor_kind,
     channel,
-    channel_name,
+    channel_name: probe && t(probe),
     quantity,
     unit,
     observed_at: new Date(now).toISOString(),

@@ -8,6 +8,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { formatDateTime } from "@tollbooth-dpyc/web";
 import { tourTarget, useTimezone } from "@tollbooth-dpyc/web/react";
+import { useT } from "../i18n";
 import { define } from "../lib/glossary";
 import { instrumentLabel } from "../lib/instruments";
 import type { Reading } from "../lib/field";
@@ -18,28 +19,35 @@ import { COLUMNS, figure } from "../views/Log";
 import Deck from "./instruments/Deck";
 import Trace from "./Trace";
 
-const Mark = () => <span className="sample-mark">Illustrative</span>;
+function Mark() {
+  const t = useT();
+  return <span className="sample-mark">{t("ui.panelPreview.illustrative")}</span>;
+}
 
 export default function PanelPreview({ lead }: { lead: ReactNode }) {
+  const t = useT();
   const [, zone] = useTimezone();
   const [units] = useUnits();
   const now = useMemo(() => Date.now(), []);
-  const readings = useMemo(() => previewReadings(now), [now]);
+  const readings = useMemo(() => previewReadings(now, t), [now, t]);
   const days = useMemo(() => previewDays(now), [now]);
-  const [opened, setOpened] = useState<Reading>(() => readings.find((r) => r.sensor_kind === "pressure") ?? readings[0]);
+  // Kept by kind and channel, so the open instrument stays open when the language changes.
+  const [openedAt, setOpenedAt] = useState<Pick<Reading, "sensor_kind" | "channel">>({ sensor_kind: "pressure", channel: null });
+  const opened = readings.find((r) => r.sensor_kind === openedAt.sensor_kind && r.channel === openedAt.channel) ?? readings[0];
+  const setOpened = (r: Reading) => setOpenedAt({ sensor_kind: r.sensor_kind, channel: r.channel });
 
   return (
     <div className="space-y-4">
       <section className="card flex flex-wrap items-center gap-x-6 gap-y-3 p-5">
         <div className="min-w-0 flex-1 basis-80">
-          <h1 className="text-3xl">Your panel, one day</h1>
-          <p className="prose-line mt-1 text-sm">These instruments read a made-up farm, and none of these figures come from a real station.</p>
+          <h1 className="text-3xl">{t("ui.panelPreview.heading")}</h1>
+          <p className="prose-line mt-1 text-sm">{t("ui.panelPreview.intro")}</p>
         </div>
         {lead}
       </section>
 
       <header className="card flex flex-wrap items-center gap-3 p-4">
-        <h2 {...tourTarget("panel.station")} className="text-xl">Home Farm</h2>
+        <h2 {...tourTarget("panel.station")} className="text-xl">{t("ui.panelPreview.homeFarm")}</h2>
         <Mark />
         <span className="ml-auto font-mono text-xs text-[var(--tb-muted)]">{formatDateTime(new Date(now).toISOString(), zone)}</span>
       </header>
@@ -51,20 +59,20 @@ export default function PanelPreview({ lead }: { lead: ReactNode }) {
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <section className="card p-4">
           <h2 className="mb-2 flex flex-wrap items-center gap-3 text-lg">
-            {instrumentLabel(opened.sensor_kind, opened.channel, opened.channel_name)}: the last day <Mark />
+            {t("ui.panelPreview.lastDay", { instrument: instrumentLabel(opened.sensor_kind, opened.channel, opened.channel_name) })} <Mark />
           </h2>
           <p className="prose-line mb-2 text-sm">{define(opened.sensor_kind)?.said(units)}</p>
           <Trace series={previewSeries(opened, now)} units={units} label={opened.sensor_kind} />
         </section>
 
         <section className="card overflow-x-auto p-4">
-          <h2 className="mb-2 flex flex-wrap items-center gap-3 text-lg">The log <Mark /></h2>
+          <h2 className="mb-2 flex flex-wrap items-center gap-3 text-lg">{t("ui.panelPreview.log")} <Mark /></h2>
           <table className="w-full text-right font-mono text-sm">
             <thead className="text-xs text-[var(--tb-muted)]">
               <tr>
-                <th className="py-1.5 text-left font-normal">Date</th>
+                <th className="py-1.5 text-left font-normal">{t("ui.panelPreview.date")}</th>
                 {COLUMNS.map((c) => (
-                  <th key={c.col} className="py-1.5 pl-3 font-normal">{c.name}{c.unit && ` (${convert(0, c.unit, units).unit})`}</th>
+                  <th key={c.col} className="py-1.5 pl-3 font-normal">{t(c.name)}{c.unit && ` (${convert(0, c.unit, units).unit})`}</th>
                 ))}
               </tr>
             </thead>
@@ -85,9 +93,10 @@ export default function PanelPreview({ lead }: { lead: ReactNode }) {
 
 /** For a stranger: the same panel, and the way in. */
 export function PublicPanel() {
+  const t = useT();
   return (
     <div className="page">
-      <PanelPreview lead={<Link to="/signin" className="chip chip-accent">Sign in</Link>} />
+      <PanelPreview lead={<Link to="/signin" className="chip chip-accent">{t("ui.panelPreview.signIn")}</Link>} />
     </div>
   );
 }

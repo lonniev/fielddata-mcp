@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { LocateFixed, Map as MapIcon } from "lucide-react";
 import { useProperty } from "@tollbooth-dpyc/web/react";
+import { useT } from "../i18n";
 import { chosenRow, isChosen, shortStationId, toggleChoice } from "../lib/chosen";
 import { listStations, nearbyStations, type NearbyStation, type Station } from "../lib/field";
 import { formatDistance, formatQuantity, radiusChoices } from "../lib/units";
@@ -12,6 +13,7 @@ import { VENDORS } from "../lib/vendors";
 import StationMap, { type MapStation } from "./StationMap";
 
 export default function NearbyStations() {
+  const t = useT();
   const { hash } = useLocation();
   const [units] = useUnits();
   const [chosen, setChosen] = useProperty<string[]>("chosen_stations", []);
@@ -38,7 +40,7 @@ export default function NearbyStations() {
   function locate() {
     setProblem("");
     if (!navigator.geolocation) {
-      setProblem("This browser cannot give a location: type one in.");
+      setProblem(t("ui.nearbyStations.noLocation"));
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -46,7 +48,7 @@ export default function NearbyStations() {
         setLat(coords.latitude.toFixed(4));
         setLon(coords.longitude.toFixed(4));
       },
-      (e) => setProblem(`The location could not be read: ${e.message}`),
+      (e) => setProblem(t("ui.nearbyStations.locationFailed", { reason: e.message })),
     );
   }
 
@@ -72,9 +74,11 @@ export default function NearbyStations() {
     .filter((c) => !(found ?? []).some((s) => shortStationId(s.station_id) === c.short))
     .map((c) => {
       const known = saved.find((s) => shortStationId(s.station_id) === c.short);
-      const vendor = VENDORS.find((v) => v.id === c.vendor)?.label ?? "Saved";
-      const near = c.latitude != null && c.longitude != null ? ` near ${c.latitude.toFixed(2)}, ${c.longitude.toFixed(2)}` : "";
-      return { ...c, name: known?.name ?? `${vendor} station${near}` };
+      const vendor = VENDORS.find((v) => v.id === c.vendor)?.label ?? t("ui.nearbyStations.saved");
+      const unnamed = c.latitude != null && c.longitude != null
+        ? t("ui.nearbyStations.unnamedNear", { vendor, latitude: c.latitude.toFixed(2), longitude: c.longitude.toFixed(2) })
+        : t("ui.nearbyStations.unnamed", { vendor });
+      return { ...c, name: known?.name ?? unnamed };
     });
   const place = lat.trim() !== "" && lon.trim() !== "" && Number.isFinite(Number(lat)) && Number.isFinite(Number(lon))
     ? { latitude: Number(lat), longitude: Number(lon) }
@@ -94,8 +98,8 @@ export default function NearbyStations() {
 
   return (
     <section id="nearby" data-tour="nearby" className="card p-5 lg:col-span-2">
-      <h2 className="font-display text-lg">Nearby stations</h2>
-      <p className="prose-line mb-3 text-sm">Tick a station its owner publishes, and it joins your stations on the panel and for your AI agents. Untick it to remove it.</p>
+      <h2 className="font-display text-lg">{t("ui.nearbyStations.heading")}</h2>
+      <p className="prose-line mb-3 text-sm">{t("ui.nearbyStations.intro")}</p>
       {others.length > 0 && (
         <ul className="mb-4 grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
           {others.map((s) => (
@@ -109,16 +113,16 @@ export default function NearbyStations() {
         </ul>
       )}
       <div className="flex flex-wrap items-end gap-3 text-sm">
-        <label className="grid gap-1">Latitude<input className="field w-32" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} /></label>
-        <label className="grid gap-1">Longitude<input className="field w-32" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} /></label>
-        <button type="button" className="chip" onClick={locate}><LocateFixed size={16} aria-hidden /> Use my location</button>
-        <button type="button" className={onMap ? "chip chip-on" : "chip"} aria-pressed={onMap} onClick={() => setOnMap((v) => !v)}><MapIcon size={16} aria-hidden /> Find on map</button>
-        <label className="grid gap-1">Within
+        <label className="grid gap-1">{t("ui.nearbyStations.latitude")}<input className="field w-32" inputMode="decimal" value={lat} onChange={(e) => setLat(e.target.value)} /></label>
+        <label className="grid gap-1">{t("ui.nearbyStations.longitude")}<input className="field w-32" inputMode="decimal" value={lon} onChange={(e) => setLon(e.target.value)} /></label>
+        <button type="button" className="chip" onClick={locate}><LocateFixed size={16} aria-hidden /> {t("ui.nearbyStations.useLocation")}</button>
+        <button type="button" className={onMap ? "chip chip-on" : "chip"} aria-pressed={onMap} onClick={() => setOnMap((v) => !v)}><MapIcon size={16} aria-hidden /> {t("ui.nearbyStations.findOnMap")}</button>
+        <label className="grid gap-1">{t("ui.nearbyStations.within")}
           <select className="field" value={reach} onChange={(e) => setReach(Number(e.target.value))}>
             {radii.map((r, i) => <option key={r.label} value={i}>{r.label}</option>)}
           </select>
         </label>
-        <button type="button" className="chip chip-accent" disabled={busy || !canSearch} onClick={() => void search()}>{busy ? "Looking…" : "Find stations"}</button>
+        <button type="button" className="chip chip-accent" disabled={busy || !canSearch} onClick={() => void search()}>{busy ? t("ui.nearbyStations.looking") : t("ui.nearbyStations.find")}</button>
       </div>
       {onMap && (
         <StationMap place={place} stations={onTheMap}
@@ -128,7 +132,7 @@ export default function NearbyStations() {
           }} />
       )}
       {problem && <p className="mt-3 text-sm text-[var(--tb-err-ink)]">{problem}</p>}
-      {found?.length === 0 && <p className="prose-line mt-3 text-sm">No station is published within {radius.label} of that place.</p>}
+      {found?.length === 0 && <p className="prose-line mt-3 text-sm">{t("ui.nearbyStations.none", { radius: radius.label })}</p>}
       {(found?.length ?? 0) > 0 && (
         <ul className="mt-3 grid gap-x-6 md:grid-cols-2 xl:grid-cols-3">
           {(found ?? []).map((s) => (

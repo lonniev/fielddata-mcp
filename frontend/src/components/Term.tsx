@@ -5,10 +5,12 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { define } from "../lib/glossary";
 import { useUnits } from "../lib/useUnits";
 
 export default function Term({ of, label }: { of: string; label?: string }) {
+  useT(); // the word and its meaning follow the reader's language
   const [units] = useUnits();
   const entry = define(of);
   const [open, setOpen] = useState(false);
@@ -47,7 +49,7 @@ export default function Term({ of, label }: { of: string; label?: string }) {
           lifted.current = false;
         }}
       >
-        {label ?? entry.term}
+        {label ?? entry.term()}
       </button>
       {open && (
         <span role="note" className="site-menu left-0 block w-72 text-left text-sm font-normal normal-case">

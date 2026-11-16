@@ -1,6 +1,6 @@
 /** The instruments: inline SVG, coloured only by the theme's tokens, at rest when `quantity` is null. */
 
-import { compassPoint, instrumentFor, needleAngle, polar, scaleRatio } from "../../lib/instruments";
+import { compassPoint, instrumentFor, needleAngle, pointName, polar, scaleRatio, type CompassPoint } from "../../lib/instruments";
 import { formatQuantity, formatTick, type UnitSystem } from "../../lib/units";
 
 export interface GaugeProps {
@@ -106,7 +106,7 @@ export function Dial({ kind, quantity, unit, units, label }: GaugeProps) {
 
 export function Compass({ kind, quantity, unit, units, label }: GaugeProps) {
   const figure = quantity == null ? REST : `${compassPoint(quantity)} ${formatQuantity(quantity, unit, units)}`;
-  const cardinals: [string, number][] = [["N", 0], ["E", 90], ["S", 180], ["W", 270]];
+  const cardinals: [CompassPoint, number][] = [["N", 0], ["E", 90], ["S", 180], ["W", 270]];
   return (
     <Bezel kind={kind} label={label} figure={figure}>
       {Array.from({ length: 72 }, (_, i) => i * 5).map((a) => {
@@ -118,7 +118,7 @@ export function Compass({ kind, quantity, unit, units, label }: GaugeProps) {
         const [x, y] = polar(100, 100, 61, a);
         return (
           <text key={name} x={x} y={y + 5} textAnchor="middle" fontSize="14" fill="var(--dial-ink)" fontFamily="var(--font-display)">
-            {name}
+            {pointName(name)}
           </text>
         );
       })}
