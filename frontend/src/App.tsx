@@ -157,7 +157,7 @@ function Site() {
               <Route path="sources" element={<Sources />} />
               <Route path="terms" element={<Terms />} />
               <Route path="terms-of-use" element={<TermsOfUse />} />
-              <Route path="signin" element={session.signedIn ? <Navigate to="/panel" replace /> : <div className="page"><div className="card mx-auto max-w-3xl p-6">{gate}</div></div>} />
+              <Route path="signin" element={session.signedIn ? <Navigate to="/panel" replace /> : <div className="page"><div className="card p-6">{gate}</div></div>} />
               <Route path="panel" element={session.signedIn ? <Panel /> : <PublicPanel />} />
               <Route path="log" element={<Session><Log /></Session>} />
               <Route path="wallet" element={<Session><Wallet /></Session>} />
