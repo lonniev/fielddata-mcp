@@ -173,7 +173,7 @@ h2,
   }
   /* Every page: wide, and ending in open ground so the fieldscape shows. */
   .page {
-    max-width: 80rem;
+    max-width: 90rem;
     margin-inline: auto;
     padding: 1.25rem 1rem 34vh;
   }
