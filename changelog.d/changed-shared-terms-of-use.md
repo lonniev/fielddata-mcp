@@ -1,1 +1,0 @@
-- The Terms of use page draws its shared sections (your key, fees, the café, marks) from the web package, and the sign-in card links to it.

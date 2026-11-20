@@ -1,1 +1,0 @@
-- FieldData joins the DPYC Software Factory and gains an MCP Registry manifest, which publishes on the next tagged release.

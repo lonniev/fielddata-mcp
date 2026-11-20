@@ -1,1 +1,0 @@
-- Ambient Weather stations: bring your ambientweather.net keys, on their own or beside your Ecowitt keys, and every tool and page reads them the same way.

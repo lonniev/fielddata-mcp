@@ -1,1 +1,0 @@
-- Hindi addresses the reader informally (तुम), like French, Spanish and Chinese, and Japanese drops a redundant あなた; quotations keep their own words.
