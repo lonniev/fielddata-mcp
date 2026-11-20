@@ -177,7 +177,7 @@ function Site() {
 export default function App() {
   const t = useT();
   return (
-    <AppShell theme="dark" gateOptions={{ welcome: t("ui.app.welcome") }} signedOut={() => <Site />}>
+    <AppShell theme="dark" gateOptions={{ welcome: t("ui.app.welcome"), termsHref: "/terms-of-use" }} signedOut={() => <Site />}>
       {() => <Site />}
     </AppShell>
   );
