@@ -1,0 +1,1 @@
+- The MCP Registry listing carries a title (FieldData) and a link to https://fielddata.tollbooth-dpyc.com, and an icon.
