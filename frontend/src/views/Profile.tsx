@@ -1,4 +1,4 @@
-/** The account page: the package's panels in their one order, with the station keys, display units and language. */
+/** The account page: the package's folding groups, with your profile, units and language (You), your balance (Money), and the station keys and nearby stations (This site). */
 
 import { AccountPage, BalanceAndTopUp, LanguageChooser, NostrProfilePanel, useAppShell, useTour } from "@tollbooth-dpyc/web/react";
 import NearbyStations from "../components/NearbyStations";
@@ -75,15 +75,11 @@ export default function Profile() {
         npub={session.npub}
         heading={null}
         profile={false}
-        before={
-          <>
-            <BalanceAndTopUp decorateTile={decorateTile} />
-            <NostrProfilePanel npub={session.npub} />
-            <StationKeys npub={session.npub} />
-            <NearbyStations />
-          </>
-        }
-        between={{ timezone: <><Units /><Language /></> }}
+        panels={{
+          you: <><NostrProfilePanel npub={session.npub} /><Units /><Language /></>,
+          money: <BalanceAndTopUp decorateTile={decorateTile} />,
+          site: <><StationKeys npub={session.npub} /><NearbyStations /></>,
+        }}
         theme={{ classNames: { chip: "chip", active: "chip chip-on" } }}
         timezone={{ classNames: { select: "field" } }}
         usage={{ classNames: USAGE }}
@@ -95,6 +91,9 @@ export default function Profile() {
         onSignOut={session.signOut}
         classNames={{
           root: "account",
+          group: "account-group",
+          groupSummary: "account-group-title",
+          groupBody: "account-grid",
           section: "card p-5",
           sectionHeading: "font-display mb-1 text-lg",
           sectionIntro: "prose-line mb-3 text-sm",
