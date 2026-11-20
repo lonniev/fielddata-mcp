@@ -1,1 +1,0 @@
-- A chosen station reads correctly for a patron who also holds keys for that vendor, and one station that will not read no longer breaks the list or the Profile page.

@@ -1,1 +1,0 @@
-- FieldData reads in English, French, Spanish, Japanese, Chinese and Hindi. A guest starts in their country's language; the chooser is on Profile beside Units. The shared web package does the translating; FieldData supplies only its words. The Terms of Use stay in English.

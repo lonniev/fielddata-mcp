@@ -1,1 +1,0 @@
-- A word's definition now also closes by itself once there has been time to read it, from the shared web package's `Term`. The café shelf reads through the package's reader.

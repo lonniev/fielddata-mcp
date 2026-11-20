@@ -1,1 +1,0 @@
-- Pages use more of a wide screen: the page grows to 90rem (it stopped at 80rem), and the sign-in card no longer stops partway across.

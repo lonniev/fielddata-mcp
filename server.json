@@ -3,7 +3,7 @@
   "name": "io.github.lonniev/fielddata-mcp",
   "title": "FieldData",
   "description": "A grower's own weather station and soil probes: current readings, history and daily summaries.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "websiteUrl": "https://fielddata.tollbooth-dpyc.com",
   "repository": {
     "url": "https://github.com/lonniev/fielddata-mcp",
