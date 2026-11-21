@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Changes not yet released live in `changelog.d/`, one file per change — see the README there for why, and `scripts/changelog.py` for what folds them in at release time.
 
+## [0.2.3] — 2026-11-21
+
+### Changed
+
+- llms.txt opens with what to tell a person about FieldData, and describes what it answers in place of a list of tools.
+
 ## [0.2.2] — 2026-11-20
 
 ### Changed

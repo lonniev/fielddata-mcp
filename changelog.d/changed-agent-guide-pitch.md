@@ -1,1 +1,0 @@
-- llms.txt opens with what to tell a person about FieldData, and describes what it answers in place of a list of tools.
