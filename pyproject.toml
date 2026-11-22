@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fielddata-mcp"
-version = "0.2.3"
+version = "0.2.4"
 description = "A grower's own weather station and soil probes, vendor-neutral, monetized with Tollbooth DPYC"
 readme = "README.md"
 license = "Apache-2.0"
@@ -17,7 +17,7 @@ dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
-    "tollbooth-dpyc[nostr]==0.128.0",
+    "tollbooth-dpyc[nostr]==0.129.0",
 ]
 
 [project.optional-dependencies]
