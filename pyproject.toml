@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fielddata-mcp"
-version = "0.2.6"
+version = "0.2.7"
 description = "A grower's own weather station and soil probes, vendor-neutral, monetized with Tollbooth DPYC"
 readme = "README.md"
 license = "Apache-2.0"
