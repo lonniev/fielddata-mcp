@@ -107,6 +107,13 @@ python -m fielddata_mcp.server
 Tests run against the example responses in Ecowitt's API docs and responses built from Ambient Weather's published field list (`tests/fixtures/`).
 The live regression fixture is a GW1200 gateway with one WH51 soil probe.
 
+<!-- dpyc-family -->
+## Part of Tollbooth DPYC™
+
+This service is one of the Tollbooth DPYC™ family of MCP servers.
+Browse them all in the [MCP catalog](https://cafe.tollbooth-dpyc.com/collections/mcps).
+The [DPYC Oracle](https://dpyc-oracle.fastmcp.app/mcp) lists the live network with its free `list_services` tool.
+
 ## License
 
 Apache-2.0
